@@ -1,0 +1,17 @@
+#Trained A2C for a range of time steps; to get a sense of how performance scales:
+
+A2C: 10k Timesteps
+mean_episode_reward: 1343.98358875 
+std_episode_reward: 305.1880059662487
+
+A2C: 20k Timesteps
+mean_episode_reward: 2208.3451898 
+std_episode_reward: 241.1425106843368
+
+A2C: 50k Timesteps --> Performed worse than 10k and 20k ?
+mean_episode_reward: 1266.9428258 
+std_episode_reward: 318.40666292503414
+
+A2C: 100k Timesteps --> Performed worse than 10k, 20k, 50k
+mean_episode_reward: 1259.6749377 
+std_episode_reward: 368.25582645447
