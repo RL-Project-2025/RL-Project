@@ -1,25 +1,27 @@
-# experiments/train_qrdqn.py
-
 import os
 import gymnasium as gym
 import gym4real
 from gym4real.envs.wds.utils import parameter_generator
 from sb3_contrib import QRDQN
+from stable_baselines3.common.logger import configure
 
 print(">>> train_qrdqn.py is running...")
 
-# ---------------------------
-# Load environment settings
-# ---------------------------
+# Load env
 package_root = os.path.dirname(gym4real.__file__)
 world_file = os.path.join(package_root, "envs", "wds", "world_anytown_fixed.yaml")
 
 params = parameter_generator(world_file)
 env = gym.make("gym4real/wds-v0", settings=params)
 
-# ---------------------------
+# Create a logs/ folder 
+log_path = "logs/trpo_wds/"
+os.makedirs(log_path, exist_ok=True)
+
+# Tell SB3 to log to TensorBoard format
+new_logger = configure(log_path, ["tensorboard"])
+
 # Create QR-DQN model
-# ---------------------------
 model = QRDQN(
     policy="MlpPolicy",
     env=env,
@@ -36,15 +38,13 @@ model = QRDQN(
     verbose=1,
 )
 
-# ---------------------------
-# Train model
-# ---------------------------
-TIMESTEPS = 150_000  # placeholder; we may bump this later
-model.learn(total_timesteps=TIMESTEPS)
+model.set_logger(new_logger)
 
-# ---------------------------
+# Training
+TIMESTEPS = 150_000  
+model.learn(total_timesteps=TIMESTEPS, progress_bar=True)
+
 # Save model
-# ---------------------------
 os.makedirs("models", exist_ok=True)
 model.save("models/qrdqn_wds.zip")
 env.close()

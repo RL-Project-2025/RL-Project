@@ -4,6 +4,8 @@ from gym4real.envs.wds.utils import parameter_generator
 import os
 
 from sb3_contrib import TRPO
+from stable_baselines3.common.logger import configure
+
 
 # Load config YAML
 package_root = os.path.dirname(gym4real.__file__)
@@ -13,6 +15,13 @@ params = parameter_generator(world_file)
 
 # Create Env
 env = gym.make("gym4real/wds-v0", settings=params)
+
+# Create a logs/ folder 
+log_path = "logs/trpo_wds/"
+os.makedirs(log_path, exist_ok=True)
+
+# Tell SB3 to log to TensorBoard format
+new_logger = configure(log_path, ["tensorboard"])
 
 # Create Model
 model = TRPO(
@@ -24,9 +33,12 @@ model = TRPO(
     batch_size=128,   
 )
 
+
+model.set_logger(new_logger)
+
 # Training
-TIMESTEPS = 150_000   
-model.learn(total_timesteps=TIMESTEPS)
+TIMESTEPS = 40000  
+model.learn(total_timesteps=TIMESTEPS, progress_bar=True)
 
 # Save Model
 model.save("models/trpo_wds")
