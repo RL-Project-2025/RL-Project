@@ -38,6 +38,7 @@ Reinforcement Learning project using gym4ReaL.
 	- [ ] **Have** models(zip files for): QR-DQN, TRPO
 - **ANYONE**
 	- [ ] **MO A2C** Look into this
+ 	- [ ] **Tensor/Weights** Friday
 
 ## Hopefully Schedule
 
