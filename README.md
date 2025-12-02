@@ -36,6 +36,8 @@ Reinforcement Learning project using gym4ReaL.
 - **Reece**
 	- [ ] **TUESDAY**: Look into whether an episode is **168** time steps or not **(IT SHOULD BE!)**
 	- [ ] **Have** models(zip files for): QR-DQN, TRPO
+- **ANYONE**
+	- [ ] **MO A2C** Look into this
 
 ## Hopefully Schedule
 
