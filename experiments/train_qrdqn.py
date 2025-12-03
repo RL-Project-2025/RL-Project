@@ -41,7 +41,7 @@ model = QRDQN(
 model.set_logger(new_logger)
 
 # Training
-TIMESTEPS = 150_000  
+TIMESTEPS = 20000  
 model.learn(total_timesteps=TIMESTEPS, progress_bar=True)
 
 # Save model
