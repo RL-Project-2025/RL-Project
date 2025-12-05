@@ -1,4 +1,6 @@
 import gymnasium as gym
+import os
+import gym4real
 from gym4real.envs.wds.utils import parameter_generator
 from stable_baselines3 import A2C
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -6,7 +8,9 @@ from stable_baselines3.common.evaluation import evaluate_policy
 
 # ************* Utility funcs / classes
 def create_env():
-    params = parameter_generator()
+    package_root = os.path.dirname(gym4real.__file__)
+    world_file = os.path.join(package_root, "envs", "wds", "world_anytown_fixed.yaml")
+    params = parameter_generator(world_file)
     env = gym.make('gym4real/wds-v0', **{'settings': params})
     obs,info = env.reset()
     done = False
@@ -14,8 +18,8 @@ def create_env():
 
 # ************* Train the model 
 env = create_env()
-NUM_TIMESTEPS = 100000
-MODEL_FILE_NAME = "A2C_model_" + str(NUM_TIMESTEPS) + "_ts"
+NUM_TIMESTEPS = 20000
+MODEL_FILE_NAME = "A2C_model_fixed_ts" + str(NUM_TIMESTEPS) + ""
 A2C_model = A2C("MlpPolicy", env, verbose=1) #device = "mps"
 A2C_model.learn(total_timesteps=NUM_TIMESTEPS)
 A2C_model.save(MODEL_FILE_NAME)

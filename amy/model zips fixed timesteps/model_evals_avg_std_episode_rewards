@@ -1,0 +1,33 @@
+Number of eval episodes: 20
+
+________________________________________
+
+A2C: 10k Timesteps
+mean_episode_reward: 192.39669675000002
+std_episode_reward: 8.297104265971827
+
+A2C: 20k Timesteps
+mean_episode_reward: 203.28652864999998
+std_episode_reward: 10.334806025085017
+
+A2C: 50k Timesteps
+mean_episode_reward: 171.77422635
+std_episode_reward: 8.823898740751115
+
+A2C: 100k Timesteps 
+mean_episode_reward: <currently training>
+std_episode_reward:
+
+________________________________________
+
+Maskable PPO: 10k Timesteps
+mean_episode_reward: 252.0252692
+std_episode_reward: 18.627423260708923
+
+Maskable PPO: 20k Timesteps
+mean_episode_reward: 267.38287084999996
+std_episode_reward: 23.123287655785173
+
+Maskable PPO: 50k Timesteps
+mean_episode_reward: <currently training>
+std_episode_reward:
