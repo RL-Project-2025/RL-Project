@@ -6,6 +6,8 @@ from sb3_contrib import QRDQN
 from evaluation.evaluate_random import evaluate_random_policy
 from evaluation.evaluate_agent import evaluate_model
 from evaluation.heuristics import evaluate_heuristic, simple_heuristic
+from gym4real.envs.wds.hourly_wrapper import HourlyDecisionWrapper
+
 
 print(">>> test_qrdqn.py is running...")
 
@@ -15,7 +17,10 @@ package_root = os.path.dirname(gym4real.__file__)
 world_file = os.path.join(package_root, "envs", "wds", "world_anytown_fixed.yaml")
 
 params = parameter_generator(world_file)
-env = gym.make("gym4real/wds-v0", settings=params)
+
+base_env = gym.make("gym4real/wds-v0", settings=params)
+env = HourlyDecisionWrapper(base_env)
+
 
 # Load QR-DQN model
 model_path = "models/qrdqn_wds.zip"

@@ -2,9 +2,9 @@ import gymnasium as gym
 import gym4real
 from gym4real.envs.wds.utils import parameter_generator
 import os
-
 from sb3_contrib import TRPO
 from stable_baselines3.common.logger import configure
+from gym4real.envs.wds.hourly_wrapper import HourlyDecisionWrapper
 
 
 # Load config YAML
@@ -14,7 +14,9 @@ world_file = os.path.join(package_root, "envs", "wds", "world_anytown_fixed.yaml
 params = parameter_generator(world_file)
 
 # Create Env
-env = gym.make("gym4real/wds-v0", settings=params)
+base_env = gym.make("gym4real/wds-v0", settings=params)
+env = HourlyDecisionWrapper(base_env)
+
 
 # Create a logs/ folder 
 log_path = "logs/trpo_wds/"
