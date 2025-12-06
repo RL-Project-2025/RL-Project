@@ -12,6 +12,7 @@
 - **Wrapper** - Hulusi, Reece
 - **Scaling** - Kamal, Amy
 - **Industry** - Kavish, Radha
+- **Add thoughts on which algorithm characteristics are best for chosen problem/environment**: https://docs.google.com/spreadsheets/d/1U_xfij9295x4M4Rb4wOvi_tpJNEBN-V8s9ZvnnrzTE0/edit?usp=sharing
 
 ## Hopefully Schedule
 
