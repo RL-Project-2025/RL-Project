@@ -9,7 +9,7 @@
 
 ## To Do
 
-- **Add thoughts/questions on episode length variability to google doc - ready to discuess with GLA/Josh**: https://docs.google.com/document/d/1B82hkMVu4wi61cndpuxfvU4b1d1z9wNz_yYGI_WssDs/edit?usp=sharing
+- **Add thoughts/questions on episode length variability to google doc - ready to discuss with GLA/Josh**: https://docs.google.com/document/d/1B82hkMVu4wi61cndpuxfvU4b1d1z9wNz_yYGI_WssDs/edit?usp=sharing
 - **Wrapper** - Hulusi, Reece
 - **Scaling** - Kamal, Amy
 - **Industry** - Kavish, Radha
