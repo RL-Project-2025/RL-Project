@@ -8,7 +8,13 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor, VecNormali
 
 # ************* Utility funcs / classes
 def create_env():
-    params = parameter_generator()
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options='gym4real/envs/wds/world_anytown.yaml'
+    )
+        
     env = gym.make('gym4real/wds-v0', **{'settings': params})
     obs,info = env.reset()
     done = False
