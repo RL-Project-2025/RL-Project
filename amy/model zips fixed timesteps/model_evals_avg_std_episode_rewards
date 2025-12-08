@@ -11,12 +11,12 @@ mean_episode_reward: 203.28652864999998
 std_episode_reward: 10.334806025085017
 
 A2C: 50k Timesteps
-mean_episode_reward: 171.77422635
-std_episode_reward: 8.823898740751115
+mean_episode_reward: 182.80285629999997
+std_episode_reward: 8.513631554282348
 
 A2C: 100k Timesteps 
-mean_episode_reward: <currently training>
-std_episode_reward:
+mean_episode_reward: 146.6443528
+std_episode_reward: 29.483881744847842
 
 ________________________________________
 
@@ -29,5 +29,9 @@ mean_episode_reward: 267.38287084999996
 std_episode_reward: 23.123287655785173
 
 Maskable PPO: 50k Timesteps
-mean_episode_reward: <currently training>
-std_episode_reward:
+mean_episode_reward: 264.33016065000004
+std_episode_reward: 15.14536319952058
+
+Maskable PPO: 100k Timesteps
+mean_episode_reward: 281.93716645000006
+std_episode_reward: 24.018546098174486
