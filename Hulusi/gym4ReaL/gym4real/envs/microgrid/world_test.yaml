@@ -1,0 +1,51 @@
+demand:
+  path: "gym4real/data/microgrid/demand/profiles_test.csv"
+  timestep: 3600 # seconds
+  data_usage: "end" # "circular/end"
+
+generation:
+  path: "gym4real/data/microgrid/generation/pv_ninja_2019-2020_3kW_test.csv"
+  timestep: 3600 # seconds
+  data_usage: "end" # "circular/end"
+
+temp_amb:
+  path: "gym4real/data/microgrid/temp_amb/temp_amb_2019-2020_test.csv"
+  timestep: 86400 # seconds
+  data_usage: "end" # "circular/end"
+
+market:
+  path: "gym4real/data/microgrid/market/gme_2019-2020_test.csv"
+  timestep: 3600 # seconds
+  data_usage: "end" # "circular/end"
+
+# Parameters for dummy models of generation and market
+dummy:
+  generator: 10
+  market:
+    ask: 10
+    bid: 8
+
+observations:
+  - demand
+  - temperature
+  - soc
+  - day_of_year
+  - seconds_of_day
+  - generation
+  - market
+
+step: 3600 # in seconds
+random_battery_init: False # battery state initialization: if True it is randomized between declared bounds
+random_data_init: False # timeseries starting point: if True the timeseries starting point is randomly sampled
+seed: 42 # to sample user's demand profile (also initial data and initial battery state if enabled)
+
+termination:
+  max_iterations: null
+  min_soh: 0.6
+
+reward:
+  trading_coeff: 1
+  degradation_coeff: 1
+  clip_action_coeff: 0.1
+
+use_reward_normalization: True
