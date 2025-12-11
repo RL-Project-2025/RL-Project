@@ -1,12 +1,9 @@
-#!/usr/bin/env python3
-
 import os
+if os.path.exists('gym4ReaL'):
+    os.chdir('gym4ReaL')
 import gymnasium as gym
 import gym4real
 from gym4real.envs.wds.utils import parameter_generator
-
-if os.path.exists('gym4ReaL'):
-    os.chdir('gym4ReaL')
 
 params = parameter_generator(
     hydraulic_step=3600,
@@ -23,6 +20,7 @@ truncated = False
 while not (done or truncated):
     obs, reward, done, truncated, info = env.step(env.action_space.sample())
     steps += 1
-    print(f"Step {steps}: info={info}")
+    t = info.get('elapsed_time', 0)
+    print(f"Step {steps}: elapsed_time = {t}, Δt = {t - (steps-1)*3600}")
 
 print(f"\nTotal steps: {steps}")
