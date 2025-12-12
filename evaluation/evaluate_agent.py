@@ -1,29 +1,31 @@
 import numpy as np
 
-def evaluate_model(model, env, episodes=20):
+def evaluate_model(model, env, episodes=5):
     rewards = []
     lengths = []
 
     for _ in range(episodes):
-        obs, info = env.reset()
+        obs = env.reset()
         done = False
-        total_r = 0
-        step_count = 0
+        total_reward = 0.0
+        steps = 0
 
         while not done:
+            # SB3 returns batched actions already
             action, _ = model.predict(obs, deterministic=True)
-            obs, reward, terminated, truncated, info = env.step(action)
-            done = terminated or truncated
-            total_r += reward
-            step_count += 1
 
-        rewards.append(total_r)
-        lengths.append(step_count)
+            obs, reward, done, info = env.step(action)
+
+            total_reward += reward[0]   # VecEnv → index 0
+            steps += 1
+
+        rewards.append(total_reward)
+        lengths.append(steps)
 
     return {
-        "mean_reward": np.mean(rewards),
-        "std_reward": np.std(rewards),
-        "mean_length": np.mean(lengths),
-        "std_length": np.std(lengths),
-        "all_rewards": rewards
+        "mean_reward": float(np.mean(rewards)),
+        "std_reward": float(np.std(rewards)),
+        "mean_length": float(np.mean(lengths)),
+        "std_length": float(np.std(lengths)),
+        "all_rewards": rewards,
     }

@@ -5,25 +5,25 @@ def evaluate_random_policy(env, episodes=5):
     lengths = []
 
     for _ in range(episodes):
-        obs, info = env.reset()
+        obs = env.reset()
         done = False
-        total_r = 0
-        length = 0
+        total_reward = 0.0
+        steps = 0
 
         while not done:
-            action = env.action_space.sample()
-            obs, reward, terminated, truncated, info = env.step(action)
-            done = terminated or truncated
-            total_r += reward
-            length += 1
+            action = np.array([env.action_space.sample()])  # <-- FIX
+            obs, reward, done, info = env.step(action)
 
-        rewards.append(total_r)
-        lengths.append(length)
+            total_reward += reward[0]
+            steps += 1
+
+        rewards.append(total_reward)
+        lengths.append(steps)
 
     return {
-        "mean_reward": np.mean(rewards),
-        "std_reward": np.std(rewards),
-        "mean_length": np.mean(lengths),
-        "std_length": np.std(lengths),
-        "all_rewards": rewards
+        "mean_reward": float(np.mean(rewards)),
+        "std_reward": float(np.std(rewards)),
+        "mean_length": float(np.mean(lengths)),
+        "std_length": float(np.std(lengths)),
+        "all_rewards": rewards,
     }
