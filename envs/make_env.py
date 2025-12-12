@@ -21,7 +21,7 @@ def make_env(
     def _init():
         package_root = os.path.dirname(gym4real.__file__)
         world_file = os.path.join(
-            package_root, "envs", "wds", "world_anytown_fixed.yaml"
+            package_root, "envs", "wds", "world_anytown_fixed.yaml"     # CHANGE TO YOUR YAML
         )
 
         params = parameter_generator(world_file)
