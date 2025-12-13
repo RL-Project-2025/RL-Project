@@ -121,18 +121,12 @@ class WaterNetwork(Network):
         :return: time until the next event, if 0 the simulation is going to end
         """
         # uids = ['P78', 'P79']
-        elapsed = 0
-        while elapsed < self.hydraulic_step:
-            self.ep.ENrunH()
-            dt = self.ep.ENnextH()
-            if dt == 0:  # simulation ended
-                break
-            elapsed += dt
-
+        self.ep.ENrunH()
+        timestep = self.ep.ENnextH()
+        
         self.times.append(curr_time)
         self.load_attributes(curr_time)
-        return self.hydraulic_step if elapsed >= self.hydraulic_step else 0
-   
+        return timestep 
 
     def update_pumps(self, new_status):
         """
