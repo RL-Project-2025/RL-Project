@@ -195,13 +195,8 @@ class PPO:
             # For documentation: removed `advantages, returns = advantages.to(self.device), returns.to(self.device)` from here too
         advantages, returns = compute_gae(rewards, values, dones, self.gamma, self.lam)
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)       
-<<<<<<< HEAD
-        
+
         n = len(obs)  
-=======
-      
-        n = len(obs)
->>>>>>> f6ae3f7 (PPO zip added)
         # Tracking variables, very usefull for debugging. Need to upddate in inner loop
         total_policy_loss, total_value_loss, total_entropy = 0, 0, 0
         total_approx_kl, total_clip_frac = 0, 0
