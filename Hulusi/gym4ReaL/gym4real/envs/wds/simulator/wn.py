@@ -120,13 +120,17 @@ class WaterNetwork(Network):
         :param curr_time: current simulation time
         :return: time until the next event, if 0 the simulation is going to end
         """
-        # uids = ['P78', 'P79']
-        self.ep.ENrunH()
-        timestep = self.ep.ENnextH()
+        elapsed = 0
+        while elapsed < self.hydraulic_step:  # loop until 3600s
+            self.ep.ENrunH()      # C call - run hydraulics
+            dt = self.ep.ENnextH()  # C call - get time to next event (~600s)
+            if dt == 0:
+                break
+            elapsed += dt         # accumulate: 600, 1200, 1800, 2400, 3000, 3600
         
         self.times.append(curr_time)
-        self.load_attributes(curr_time)
-        return timestep 
+        self.load_attributes(curr_time)  # build observation ONCE
+        return self.hydraulic_step if elapsed >= self.hydraulic_step else 0
 
     def update_pumps(self, new_status):
         """

@@ -195,13 +195,8 @@ class PPO:
             # For documentation: removed `advantages, returns = advantages.to(self.device), returns.to(self.device)` from here too
         advantages, returns = compute_gae(rewards, values, dones, self.gamma, self.lam)
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)       
-<<<<<<< HEAD
         
-        n = len(obs)  
-=======
-      
         n = len(obs)
->>>>>>> f6ae3f7 (PPO zip added)
         # Tracking variables, very usefull for debugging. Need to upddate in inner loop
         total_policy_loss, total_value_loss, total_entropy = 0, 0, 0
         total_approx_kl, total_clip_frac = 0, 0
@@ -378,7 +373,6 @@ if __name__ == '__main__':
     import gymnasium as gym
     import gym4real
     from gym4real.envs.wds.utils import parameter_generator
-    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
 
     if os.path.exists("gym4ReaL"):
         os.chdir("gym4ReaL")
@@ -390,8 +384,7 @@ if __name__ == '__main__':
         world_options="gym4real/envs/wds/world_anytown.yaml"
     )
     
-    base_env = gym.make("gym4real/wds-v0", settings=params)
-    env = RewardScalingWrapper(base_env)
+    env = gym.make("gym4real/wds-v0", settings=params)
     
     agent = train_ppo(env, total_timesteps=200000, log_dir="../logs")
     agent.save("../models/ppo_scratch.pt")

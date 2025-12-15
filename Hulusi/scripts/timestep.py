@@ -4,7 +4,6 @@ if os.path.exists('gym4ReaL'):
 import gymnasium as gym
 import gym4real
 from gym4real.envs.wds.utils import parameter_generator
-from gym4real.envs.wds.hourly_wrapper import HourlyDecisionWrapper
 
 params = parameter_generator(
     hydraulic_step=3600,
@@ -12,8 +11,7 @@ params = parameter_generator(
     seed=42,
     world_options='gym4real/envs/wds/world_anytown.yaml'
 )
-base_env = gym.make('gym4real/wds-v0', settings=params)
-env = HourlyDecisionWrapper(base_env)
+env = gym.make('gym4real/wds-v0', settings=params)
 
 obs, info = env.reset()
 last_t = info.get('elapsed_time', 0.0)
