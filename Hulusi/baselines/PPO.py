@@ -4,6 +4,7 @@ import gymnasium as gym
 import gym4real
 from stable_baselines3 import PPO
 from gym4real.envs.wds.utils import parameter_generator
+from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
 
 if os.path.exists("gym4ReaL"):
     os.chdir("gym4ReaL")
@@ -16,6 +17,7 @@ params = parameter_generator(
 )
 
 env = gym.make("gym4real/wds-v0", settings=params)
+env = RewardScalingWrapper(env)
 model = PPO("MlpPolicy", env, verbose=1, device="cpu", tensorboard_log="../logs/")
 model.learn(total_timesteps=200000, tb_log_name="ppo_200k")
 model.save("../models/ppo_200k")
