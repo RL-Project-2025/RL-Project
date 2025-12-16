@@ -381,7 +381,9 @@ if __name__ == '__main__':
         hydraulic_step=3600,
         duration=604800,
         seed=42,
-        world_options="gym4real/envs/wds/world_anytown.yaml"
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+        demand_moving_average = False,
+        demand_exp_moving_average = True
     )
     
     env = gym.make("gym4real/wds-v0", settings=params)
