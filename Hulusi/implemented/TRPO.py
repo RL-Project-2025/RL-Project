@@ -383,8 +383,6 @@ class TRPO:
         '''
         
         obs, actions, rewards, old_log_probs, values, dones = self.buffer.get()
-        advantages, returns = compute_gae(rewards, values, dones, self.gamma, self.lam)
-        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
         with torch.no_grad():
             # old_dist.logits is already detached due to no_grad context
@@ -393,8 +391,9 @@ class TRPO:
         # Bootstraping value for GAE, for truncated episodes
         with torch.no_grad():
             _, _, last_value = self.ac.act(obs[-1].unsqueeze(0))
-            advantages, returns = compute_gae(rewards, values, dones, last_value, self.gamma, self.lam)
-            advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+        
+        advantages, returns = compute_gae(rewards, values, dones, last_value, self.gamma, self.lam)
+        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
         
         def get_surrogate_loss():
             new_log_probs, _, _ = self.ac.evaluate(obs, actions)
