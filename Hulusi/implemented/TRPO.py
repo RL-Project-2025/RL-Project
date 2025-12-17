@@ -92,7 +92,7 @@ class RolloutBuffer:
             torch.tensor(self.dones, dtype=torch.float32)
         )
 
-def compute_gae(rewards, values, dones, gamma=0.99, lam=0.95):
+def compute_gae(rewards, values, dones, last_value, gamma=0.99, lam=0.95):
     """Identical to PPO, reference GAE from Schulman et al. 2015."""
     advantages = []
     gae = 0
