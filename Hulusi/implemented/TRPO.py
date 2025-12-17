@@ -257,7 +257,7 @@ def conjugate_gradient(fvp_fn, g, n_iters=10, residual_tol=1e-10):
     x = torch.zeros_like(g)
     r = g.clone()
     p = r.clone()
-    r_dot_r = torch.dor(r, r)
+    r_dot_r = torch.dot(r, r)
 
     for i in range(n_iters):
         Fp = fvp_fn(p)
