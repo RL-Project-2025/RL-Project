@@ -98,7 +98,7 @@ def compute_gae(rewards, values, dones, gamma=0.99, lam=0.95):
     gae = 0
     for t in reversed(range(len(rewards))):
         if t == len(rewards) - 1:
-            next_value = 0
+            next_value = last_value * (1 - dones[t]) # This time, bootstrap if not done
         else:
             next_value = values[t + 1] * (1 - dones[t])
         delta = rewards[t] + gamma * next_value - values[t]
