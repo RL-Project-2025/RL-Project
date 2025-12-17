@@ -167,7 +167,7 @@ def flat_grad(loss, params, retain_graph=False, create_graph=False):
     
     return torch.cat(flat_grads)
 
-def compute_kl(actor, obs, old_dist):
+def compute_kl(ac, obs, old_dist):
     '''
     Compute mean KL divergence between old and current policy.
     
@@ -179,7 +179,7 @@ def compute_kl(actor, obs, old_dist):
     '''
 
     # Im not flagging obs to have requires_grad = False, yes in theory it should let the gradient flow through policy params only but I dont believe such lies told by the goverment. 
-    new_dist = actor.get_Distribution(obs)
+    new_dist = ac.get_distribution(obs)
 
     # kl_divergence expects (old, new) and computs KL(old || new)
     kl = torch.distributions.kl_divergence(old_dist, new_dist)
@@ -187,7 +187,7 @@ def compute_kl(actor, obs, old_dist):
 
     
 
-def fisher_vector_product(actor, obs, old_dist, vector, damping=0.1):
+def fisher_vector_product(ac, obs, old_dist, vector, damping=0.1):
     '''
     Compute F @ vector, where F is the FISHER INFORMATION MATRIX
 
@@ -224,9 +224,9 @@ def fisher_vector_product(actor, obs, old_dist, vector, damping=0.1):
     # Credits to: https://arxiv.org/pdf/1206.6464 The paper cites it but still.
     # 5. Add damping: return hessian_vector_product + damping * vector  
 
-    kl = compute_kl(actor, obs, old_dist)
+    kl = compute_kl(ac, obs, old_dist)
 
-    params = list(actor.parameters())
+    params = list(ac.actor.parameters())
     kl_grad = flat_grad(kl, params, retain_graph=True, create_graph=True)
 
     kl_grad_v = (kl_grad * vector).sum()
@@ -275,7 +275,7 @@ def conjugate_gradient(fvp_fn, g, n_iters=10, residual_tol=1e-10):
 
     return x
 
-def line_search(actor, get_loss, get_kl, old_params, expected_improve, step_dir, max_step, max_backtracks=10, accept_ratio=0.1, delta=0.01):
+def line_search(actor, get_loss, get_kl, expected_improve, step_dir, max_step, max_backtracks=10, accept_ratio=0.1, delta=0.01):
     '''
     Backtracking line search to find step size constraints.
     
@@ -293,16 +293,11 @@ def line_search(actor, get_loss, get_kl, old_params, expected_improve, step_dir,
     '''
 
     old_loss = get_loss().item()
-    #expected_improve = (flat_grad(get_loss(), actor.parameters()) * step_dir).sum().item()
-    # Computed get_loss and its gradient, but I already have the gradient from before CG!
-    
-    expected_improve = (policy_grad * step_dir).sum().item()
 
     for i in range(max_backtracks):
         step_frac = 0.5 ** i
         # Idk at this point, max_step scalar is  beta=(2.delta/s^T.F.s)^(1/2) right???, so step dir should aread be a step direction from CG!
-        #new_params = old_params + step_frac * max_step * step_dir
-        new_params = old_params + step_frac * step_dir #Step frac meant to account for reduced step size
+        new_params = old_params + step_frac * max_step * step_dir
         set_flat_params(actor, new_params)
         
         new_loss = get_loss().item()
@@ -310,7 +305,7 @@ def line_search(actor, get_loss, get_kl, old_params, expected_improve, step_dir,
         
         actual_improve = new_loss - old_loss
         # Looking back >= seems to be only correct if get_loss returns the surrogate objective. Just make sure that is the case please. 
-        if new_kl <= delta and actual_improve >= accept_ratio * step_frac * expected_improve:
+        if new_kl <= delta and actual_improve > 0:
             return step_frac * max_step
     
     set_flat_params(actor, old_params)
@@ -401,15 +396,15 @@ class TRPO:
             return (ratio * advantages).mean()
         
         def get_kl():
-            return compute_kl(self.ac.actor, obs, old_dist)
+            return compute_kl(self.ac, obs, old_dist)
 
         loss = get_surrogate_loss()
         policy_params = list(self.ac.actor.parameters())
         g = flat_grad(loss, policy_params, retain_graph=True)
         
         def fvp_fn(v):
-            return fisher_vector_product(self.ac.actor, obs, old_dist, v, self.damping)
-        
+            return fisher_vector_product(self.ac, obs, old_dist, v, self.damping)        
+ 
         step_dir = conjugate_gradient(fvp_fn, g, n_iters=self.cg_iters)
 
         sFs = torch.dot(step_dir, fvp_fn(step_dir)) # Appendix C, Page 14, sFs is s^T A s where A is damped fisher matrix
