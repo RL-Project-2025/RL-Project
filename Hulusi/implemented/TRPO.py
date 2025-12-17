@@ -275,7 +275,7 @@ def conjugate_gradient(fvp_fn, g, n_iters=10, residual_tol=1e-10):
 
     return x
 
-def line_search(actor, get_loss, get_kl, expected_improve, step_dir, max_step, max_backtracks=10, accept_ratio=0.1, delta=0.01):
+def line_search(actor, get_loss, get_kl, old_params, step_dir, max_step, max_backtracks=10, accept_ratio=0.1, delta=0.01):    
     '''
     Backtracking line search to find step size constraints.
     
