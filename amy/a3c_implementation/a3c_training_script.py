@@ -19,6 +19,8 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     GLOBAL_AGENT_UPDATE_INTERVAL = 5 
     GAMMA = 0.99
     LEARNING_RATE = 1e-3
+    IS_NORMALISING_REWARDS = True
+    IS_SCALING_REWARDS = True
     # ********************
 
     # set up tensorboard logging 
@@ -26,7 +28,11 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     log_dir = './a3c_logs'
     writer = SummaryWriter(f"{log_dir}/{run_name}")
     writer.add_text('hyperparameters',
-        f"lr={LEARNING_RATE}, gamma={GAMMA}, ")
+        f"lr={LEARNING_RATE}, gamma={GAMMA}, "
+        f"global_agent_update_interval={GLOBAL_AGENT_UPDATE_INTERVAL}"
+        f"max_episode_count={MAX_EPISODE_COUNT}"
+        f"is_normalising_rewards={IS_NORMALISING_REWARDS}, is_scaling_rewards={IS_SCALING_REWARDS}")
+
 
     # get the observation and action space dimensions
     env = make_env(use_normalisation=True, reward_scaling=True) # used to extract the dimensions of the action space (rather than hardcoding the number in)
@@ -49,8 +55,8 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
                                 gamma = GAMMA,
                                 worker_name = f"worker_{i}",
                                 global_episode_idx = global_episode_index,
-                                is_normalising_rewards = True,
-                                is_scaling_rewards = True,
+                                is_normalising_rewards = IS_NORMALISING_REWARDS,
+                                is_scaling_rewards = IS_SCALING_REWARDS,
                                 max_episode_count = MAX_EPISODE_COUNT,
                                 global_update_interval = GLOBAL_AGENT_UPDATE_INTERVAL,
                                 is_logging = False,  #temporarily stop logging whilst I debug why env wrappers not compatible with pytorch multiprocessing (?)
