@@ -55,16 +55,18 @@ def make_env(use_normalisation: bool,
 
     env = gym.make('gym4real/wds-v0', **{'settings': params})
 
-    # triggers: ValueError: expected sequence of length 27 at dim 1 (got 4)
-    # if reward_scaling:
-    #     env = RewardScalingWrapper(env) 
+    # multiprocessing now working with RewardScalingWrapper
+    # although curiously it makes A3C performance worse (atm)
+    if reward_scaling:
+        env = RewardScalingWrapper(env) 
 
     
-    # triggers TypeError: 'int' object is not subscriptable - when performing the agent's chosen action on the env
-    # # test to normalise rewards and observations 
-    # env = DummyVecEnv([lambda: env])
-    # env = VecMonitor(env)
-    # env = VecNormalize(env, norm_obs=True, norm_reward=True)
-    # # end of code implementing normalisation test
+    # if use_normalisation:
+        # triggers TypeError: 'int' object is not subscriptable - when performing the agent's chosen action on the env
+        # # test to normalise rewards and observations 
+        # env = DummyVecEnv([lambda: env])
+        # env = VecMonitor(env)
+        # env = VecNormalize(env, norm_obs=True, norm_reward=True)
+        # # end of code implementing normalisation test
 
     return env
