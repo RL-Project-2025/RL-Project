@@ -53,6 +53,7 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
                                 is_scaling_rewards = True,
                                 max_episode_count = MAX_EPISODE_COUNT,
                                 global_update_interval = GLOBAL_AGENT_UPDATE_INTERVAL,
+                                is_logging = False,  #temporarily stop logging whilst I debug why env wrappers not compatible with pytorch multiprocessing (?)
                                 log_dir = log_dir,
                                 logging_run_name = run_name) 
                     for i in range(num_cores)]
