@@ -281,20 +281,20 @@ class Dueling_DQN_Implementation:
         self.gamma = gamma
         self.tensorboard_log = tensorboard_log
 
-        # epsilon scheduling (same as yours)
+       
         self.epsilon = 1.0
         self.end_epsilon = 0.05
         self.decay_rate = 0.005
         self.update_frequency = 1000
         self.steps_completed = 0
 
-        # replay buffer (reuse your Replay_Buffer class)
+        
         self.experience_memory = Replay_Buffer(buffer_size)
 
         self.state_dimension = env.observation_space.shape[0]
         self.action_dimension = env.action_space.n
 
-        # dueling networks
+        
         self.policy_network = Dueling_Neural_Network(self.state_dimension, self.action_dimension, hidden=hidden)
         self.target_network = Dueling_Neural_Network(self.state_dimension, self.action_dimension, hidden=hidden)
 
@@ -303,7 +303,7 @@ class Dueling_DQN_Implementation:
 
         self.optim = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)
 
-        # Tensorboard
+        
         self.writer = None
         if self.tensorboard_log:
             os.makedirs(self.tensorboard_log, exist_ok=True)
@@ -329,7 +329,7 @@ class Dueling_DQN_Implementation:
         next_states = torch.FloatTensor(next_states)
         dones = torch.FloatTensor(dones).unsqueeze(1)
 
-        # Q(s,a) from policy net
+        
         policy_q = self.policy_network(states).gather(1, actions)
 
         with torch.no_grad():
