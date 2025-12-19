@@ -16,6 +16,18 @@ import torch.optim as optim
 from torch.distributions import Categorical
 from torch.utils.tensorboard import SummaryWriter
 
+from normalise import RunningMeanStd
+
+class NormaliseObservation:
+    def __init__(self, obs_dim):
+        self.rms = RunningMeanStd(shape=(obs_dim,))
+        self.training = True
+    
+    def __call__(self, obs, update=True):
+        if self.training and update:
+            self.rms.update(obs)
+        return self.rms.normalise(obs)
+
 class ActorCritic(nn.Module):
     '''
     The Actor-Critic class aims to follow the papers implementation
@@ -151,10 +163,14 @@ class PPO:
         self.ac = ActorCritic(obs_dim, act_dim)
         self.optimizer = optim.Adam(self.ac.parameters(), lr=lr)
         self.buffer = RolloutBuffer()
+
+        # Adding normaliser
+        self.obs_normaliser = NormaliseObservation(obs_dim)
     
     # Get action from policy for env interaction
     # Returns actions needed for env.step (action, log_prob, value) and stores the internals (log_prob & value) for later use
     def select_action(self, obs):
+        obs = self.obs_normaliser(obs)
         obs_t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0) # Absolute genius use of unsqueeze by me as act() expects batched input and single obs is shape (obs dim) NOT (1, obs_dim)
 
         with torch.no_grad(): # No grad to reduce memory consumption as I wont be be calling backward():
@@ -162,6 +178,7 @@ class PPO:
         return action.item(), log_prob.item(), value.item() #Converting to scalars before returning
     
     # Simply storing to buffer 
+    # Note for anyone checking the code, do not normalise what goes into store as running stats only change during training. WE NEED RAW OBS IN STORE!!!
     def store(self, obs, action, reward, log_prob, value, done):
         self.buffer.store(obs, action, reward, log_prob, value, done)
     
@@ -187,11 +204,19 @@ class PPO:
 
         5. Clear buffer for next rollout
         '''
+
+        # Please dont mind the messiness, will fix it later
+        # .buffer.get returns TENSOR
+        # obs_normaliser returns NUMPY
+        # torch.tensor  return TENSOR
+        # TODO:Make normaliser handle tensors
         obs, actions, rewards, old_log_probs, values, dones = self.buffer.get()
-        
+        obs = self.obs_normaliser(obs, update=False) # NO STATS UPDATE
+        obs = torch.tensor(np.array(obs), dtype=torch.float32) # I wrote this code days appart, am I going to go back and check whether if it was a tensor or not? no.
+
         #advantages, returns = compute_gae(rewards, values, dones, self.gamma, self.lam)
         #advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-        # AI sas I shouldnt be normalizing on the CPU then moving to device as it is wastefull
+        # AI sas I shouldnt be normalising on the CPU then moving to device as it is wastefull
             # For documentation: removed `advantages, returns = advantages.to(self.device), returns.to(self.device)` from here too
         advantages, returns = compute_gae(rewards, values, dones, self.gamma, self.lam)
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)       
@@ -261,13 +286,24 @@ class PPO:
     def save(self, path):
         torch.save({
             'model_state_dict': self.ac.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict()
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'obs_normaliser': {
+                'mean': self.obs_normaliser.rms.mean,
+                'var': self.obs_normaliser.rms.var,
+                'count': self.obs_normaliser.rms.count
+            }
         }, path)
     
     def load(self, path):
         checkpoint = torch.load(path)
         self.ac.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        
+        # Aims to restore normaliser stas
+        stats = checkpoint['obs_normaliser']
+        self.obs_normaliser.rms.mean = stats['mean']
+        self.obs_normaliser.rms.var = stats['var']
+        self.obs_normaliser.rms.count = stats['count']
 
 def train_ppo(env, total_timesteps = 200000, rollout_steps=2048, log_dir='../logs'):
     '''
