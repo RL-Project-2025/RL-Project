@@ -385,6 +385,9 @@ if __name__ == '__main__':
         world_options="gym4real/envs/wds/world_anytown.yaml"
     )
     
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
     base_env = gym.make("gym4real/wds-v0", settings=params)
     env = RewardScalingWrapper(base_env)
     
