@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import Categorical
 from rollout_buffer import RolloutBuffer
-# from torch.utils.tensorboard import SummaryWriter #will implement logging next
 
 # Modified from Hulusi's branch: added methods to calculate the discounted return and loss; 
 # ready for local agents that need to do this on the fly for A3C

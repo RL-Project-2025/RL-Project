@@ -2,6 +2,7 @@ from a2c import ActorCritic
 import torch.multiprocessing as mp
 from shared_optimiser import SharedAdam
 from make_env import make_env
+from torch.utils.tensorboard import SummaryWriter 
 
 class LocalAgent(mp.Process):
     """
@@ -19,7 +20,9 @@ class LocalAgent(mp.Process):
                  is_normalising_rewards: bool,
                  is_scaling_rewards: bool,
                  max_episode_count: int,
-                 global_update_interval: int
+                 global_update_interval: int,
+                 log_dir: str,
+                 logging_run_name: str
                  ) -> None:
         """
         Initialises the instance properties needed for a local agent 
@@ -36,6 +39,8 @@ class LocalAgent(mp.Process):
             is_scaling_rewards: boolean flag to be passed to the make_env function 
             max_episode_count: maximum number of episodes to be run by all agents
             global_update_interval: the interval at which a local agent should update the gradients of the global agent
+            log_dir: the folder which episode rewards should be logged to - used to initialise the SummaryWriter
+            log_run_name: the name of the run for logging purposes
         
         """
         super().__init__()
@@ -53,6 +58,8 @@ class LocalAgent(mp.Process):
         self.is_scaling_rewards = is_scaling_rewards
         self.MAX_EPISODE_COUNT = max_episode_count
         self.GLOBAL_AGENT_UPDATE_INTERVAL = global_update_interval
+        self.log_dir = log_dir
+        self.run_name = logging_run_name
 
 
     def run(self) -> None:
@@ -109,13 +116,19 @@ class LocalAgent(mp.Process):
                 obs = next_obs
 
             # when episode has finished 
+            # print to console so can monitor progress of model
+            print(self.worker_name, "Episode reward: ", episode_reward)
+
+            # passing a reference to the SummaryWriter in the LocalAgent __init__ parameters triggered the following error:
+            # TypeError: cannot pickle '_thread.lock' object
+            # this seems to be a incompatibility issue between TensorBoard SummaryWriter and PyTroch multiprocessing
+            # using a workaround suggested in the PyTorch discussion forums:
+            # https://discuss.pytorch.org/t/thread-lock-object-cannot-be-pickled-when-using-pytorch-multiprocessing-package-with-spawn-method/184953/3
+            SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('episode reward', episode_reward, self.global_episode_idx.value)
+            
             with self.global_episode_idx.get_lock(): #lock the variable before updating as another local agent could be trying to access this variable 
+                # print(self.global_episode_idx.value) #can be uncommented to check if training stops before MAX_EPISODE_COUNT
                 self.global_episode_idx.value += 1 #update the value of the episode index and not the local reference to it
-
-                print("EPISODE FINISHED")
-                print(self.worker_name, "Episode reward: ", episode_reward)
-
-            # print(self.worker_name, "Episode reward: ", episode_reward)
 
 
 
