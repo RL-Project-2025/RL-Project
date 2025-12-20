@@ -12,6 +12,7 @@
 # ^, is just z score norm with online statistics
 
 import numpy as np
+import gymnasium as gym
 
 '''
 
@@ -65,3 +66,29 @@ class RunningMeanStd:
     def normalise(self, x):
         return (x - self.mean) / np.sqrt(self.var + 1e-8) # z-score norm
 
+
+class NormaliseObservation(gym.Wrapper):
+    '''
+        Gym wrapper for obs norm using running statistics.
+        
+        Aim:
+            During training: updates stats and normalises
+            During evaluation: normalises only (set training=False)
+    '''
+
+    def __init__(self, env):
+        super().__init__(env)
+        self.rms = RunningMeanStd(shape=env.observation_space.shape)
+        self.training = True
+
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        if self.training:
+            self.rms.update(obs)
+        return self.rms.normalise(obs), reward, terminated, truncated, info
+
+    def reset(self, **kwargs):
+        obs, info = self.env.reset(**kwargs)
+        if self.training:
+            self.rms.update(obs)
+        return self.rms.normalise(obs), info
