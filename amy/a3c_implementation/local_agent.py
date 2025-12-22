@@ -19,6 +19,7 @@ class LocalAgent(mp.Process):
                  global_episode_idx: int,
                  is_normalising_rewards: bool,
                  is_scaling_rewards: bool,
+                 is_using_ema: bool,
                  max_episode_count: int,
                  global_update_interval: int,
                  is_logging : bool = False, 
@@ -38,6 +39,7 @@ class LocalAgent(mp.Process):
             global_episode_idx: total number of episoder run across all local agents
             is_normalising_rewards: boolean flag to be passed to the make_env function 
             is_scaling_rewards: boolean flag to be passed to the make_env function 
+            is_using_ema: boolean flag to determine whether the environment should use regular moving average or exponential moving average
             max_episode_count: maximum number of episodes to be run by all agents
             global_update_interval: the interval at which a local agent should update the gradients of the global agent
             is_logging: boolean flag to stipulate whether results should be logged (--> can set to false when debugging)
@@ -58,6 +60,7 @@ class LocalAgent(mp.Process):
 
         self.is_normalising_rewards = is_normalising_rewards
         self.is_scaling_rewards = is_scaling_rewards
+        self.is_using_ema = is_using_ema
         self.MAX_EPISODE_COUNT = max_episode_count
         self.GLOBAL_AGENT_UPDATE_INTERVAL = global_update_interval
         self.log_dir = log_dir
@@ -77,7 +80,8 @@ class LocalAgent(mp.Process):
         # make a local copy of the environment ready for the local agent to explore 
         # AttributeError: Can't get local object 'CDLL.__init__.<locals>._FuncPtr'
         self.local_env = make_env(use_normalisation=self.is_normalising_rewards, 
-                                  reward_scaling=self.is_scaling_rewards)
+                                  reward_scaling=self.is_scaling_rewards,
+                                  use_ema=self.is_using_ema)
         
         local_time_step = 1
         while self.global_episode_idx.value < self.MAX_EPISODE_COUNT:

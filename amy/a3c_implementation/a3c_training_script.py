@@ -21,21 +21,24 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     LEARNING_RATE = 1e-3
     IS_NORMALISING_REWARDS = True
     IS_SCALING_REWARDS = True
+    IS_USING_EMA = False #will run comparisons between MA and EMA for A3C
     # ********************
 
     # set up tensorboard logging 
     run_name = f"a3c_{int(time.time())}"
+    run_name = "bug_check"
     log_dir = './a3c_logs'
     writer = SummaryWriter(f"{log_dir}/{run_name}")
     writer.add_text('hyperparameters',
         f"lr={LEARNING_RATE}, gamma={GAMMA}, "
         f"global_agent_update_interval={GLOBAL_AGENT_UPDATE_INTERVAL}"
         f"max_episode_count={MAX_EPISODE_COUNT}"
-        f"is_normalising_rewards={IS_NORMALISING_REWARDS}, is_scaling_rewards={IS_SCALING_REWARDS}")
+        f"is_normalising_rewards={IS_NORMALISING_REWARDS}, is_scaling_rewards={IS_SCALING_REWARDS}"
+        f"is_using_ema={IS_USING_EMA}")
 
 
     # get the observation and action space dimensions
-    env = make_env(use_normalisation=True, reward_scaling=True) # used to extract the dimensions of the action space (rather than hardcoding the number in)
+    env = make_env(use_normalisation=True, reward_scaling=True, use_ema=False) # used to extract the dimensions of the action space (rather than hardcoding the number in)
     obs_space_dim = env.observation_space.shape[0]
     action_space_dim = env.action_space.n
 
@@ -57,9 +60,10 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
                                 global_episode_idx = global_episode_index,
                                 is_normalising_rewards = IS_NORMALISING_REWARDS,
                                 is_scaling_rewards = IS_SCALING_REWARDS,
+                                is_using_ema = IS_USING_EMA,
                                 max_episode_count = MAX_EPISODE_COUNT,
                                 global_update_interval = GLOBAL_AGENT_UPDATE_INTERVAL,
-                                is_logging = False,  #temporarily stop logging whilst I debug why env wrappers not compatible with pytorch multiprocessing (?)
+                                is_logging = True,  #temporarily stop logging whilst I debug why env wrappers not compatible with pytorch multiprocessing (?)
                                 log_dir = log_dir,
                                 logging_run_name = run_name) 
                     for i in range(num_cores)]

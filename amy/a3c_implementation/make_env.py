@@ -1,11 +1,17 @@
 import gymnasium as gym
 from gym4real.envs.wds.utils import parameter_generator
-# from gym4real.envs.wds.hourly_wrapper import HourlyDecisionWrapper - not using right ? 
 from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
-from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor, VecNormalize
+import Normalise #for type hinting
+from Normalise import NormaliseObservation
 
 def make_env(use_normalisation: bool,
-                reward_scaling: bool = False,):
+                reward_scaling: bool,
+                use_ema: bool) -> Normalise.NormaliseObservation:
+    """
+    Wraps the environment according to the parameters + adjusts the env to use either regular moving average or exponential moving average
+
+    Returns: a wrapped version of the gym environment 
+    """
     
     params = parameter_generator(
         hydraulic_step=3600,
@@ -14,20 +20,16 @@ def make_env(use_normalisation: bool,
         world_options='gym4real/envs/wds/world_anytown.yaml'
     )
 
+    if use_ema:
+        params['demand_moving_average'] = False
+        params['demand_exp_moving_average'] = True
+
     env = gym.make('gym4real/wds-v0', **{'settings': params})
 
-    # multiprocessing now working with RewardScalingWrapper
-    # although curiously it makes A3C performance worse (atm)
     if reward_scaling:
         env = RewardScalingWrapper(env) 
 
-    # currently debugging this 
-    # if use_normalisation:
-        # triggers TypeError: 'int' object is not subscriptable - when performing the agent's chosen action on the env
-        # test to normalise rewards and observations 
-        # env = DummyVecEnv([lambda: env])
-        # env = VecMonitor(env)
-        # env = VecNormalize(env, norm_obs=True, norm_reward=True)
-        # end of code implementing normalisation test
+    if use_normalisation:
+        env = NormaliseObservation(env)
 
     return env
