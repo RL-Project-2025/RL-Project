@@ -546,6 +546,7 @@ if __name__ == '__main__':
     import gym4real
     from gym4real.envs.wds.utils import parameter_generator
     from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
 
     if os.path.exists("gym4ReaL"):
         os.chdir("gym4ReaL")
@@ -562,7 +563,8 @@ if __name__ == '__main__':
 
     env = gym.make("gym4real/wds-v0", settings=params)
     env = RewardScalingWrapper(env)
-
+    env = NormaliseObservation(env)
+    
     agent = train_trpo(env, total_timesteps=200000, log_dir="../logs")
     agent.save("../models/trpo_scratch.pt")
     print(f"\nTraining complete. Model saved to ../models/trpo_scratch.pt")

@@ -1,4 +1,4 @@
-  Page 1                                    Sat Dec 20 15:01:27 2025
+  Page 1                                    Tue Dec 23 18:43:33 2025
 
   ******************************************************************
   *                           E P A N E T                          *
@@ -7,18 +7,19 @@
   *                         Version 2.2                            *
   ******************************************************************
   
-  Analysis begun Sat Dec 20 15:01:27 2025
+  Analysis begun Tue Dec 23 18:43:33 2025
 
-  WARNING: Pump P78 closed because cannot deliver head at 97:54:19 hrs.
+  WARNING: Pump P78 closed because cannot deliver head at 98:23:24 hrs.
    
-  WARNING: Pump P78 closed because cannot deliver head at 98:10:00 hrs.
-  WARNING: Pump P79 closed because cannot deliver head at 98:10:00 hrs.
-   
-  WARNING: Pump P79 closed because cannot deliver head at 98:20:00 hrs.
-   
+  WARNING: Pump P78 closed because cannot deliver head at 98:30:00 hrs.
   WARNING: Pump P79 closed because cannot deliver head at 98:30:00 hrs.
    
-  WARNING: Pump P78 closed because cannot deliver head at 123:45:41 hrs.
+  WARNING: Pump P78 closed because cannot deliver head at 98:40:00 hrs.
    
-  WARNING: Pump P79 closed because cannot deliver head at 123:50:00 hrs.
+  WARNING: Pump P79 closed because cannot deliver head at 75:20:00 hrs.
+   
+  WARNING: Pump P78 closed because cannot deliver head at 122:50:00 hrs.
+  WARNING: Pump P79 closed because cannot deliver head at 122:50:00 hrs.
+   
+  WARNING: System unbalanced at 123:20:01 hrs. EXECUTION HALTED.
    
