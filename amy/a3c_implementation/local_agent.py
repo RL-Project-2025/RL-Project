@@ -3,6 +3,7 @@ import torch.multiprocessing as mp
 from shared_optimiser import SharedAdam
 from make_env import make_env
 from torch.utils.tensorboard import SummaryWriter 
+import torch.nn as nn
 
 class LocalAgent(mp.Process):
     """
@@ -67,6 +68,11 @@ class LocalAgent(mp.Process):
         self.run_name = logging_run_name
         self.is_logging = is_logging
 
+        self.max_grad_norm = 0.5
+
+        # attempted defining SummaryWriter as class property but it lead to Pickling errors when PyTorch multiprocessing called .start()
+        # self.summary_writer = SummaryWriter(f"{self.log_dir}/{self.run_name}")
+
 
     def run(self) -> None:
         """
@@ -101,7 +107,8 @@ class LocalAgent(mp.Process):
                 is_time_to_update = local_time_step % self.GLOBAL_AGENT_UPDATE_INTERVAL ==0
                 if is_time_to_update or done:
                     # calculate loss for local agent 
-                    loss = self.local_agent.calc_loss(done)
+                    critic_loss, actor_loss = self.local_agent.calc_loss(done)
+                    loss = critic_loss + actor_loss
                     self.shared_optimiser.zero_grad()
                     loss.backward()
 
@@ -110,6 +117,8 @@ class LocalAgent(mp.Process):
                     for local_param, global_param in agent_parameters:
                         global_param._grad = local_param.grad
 
+                    nn.utils.clip_grad_norm_(self.local_agent.parameters(), self.max_grad_norm)
+                    nn.utils.clip_grad_norm_(self.global_agent.parameters(), self.max_grad_norm)
                     self.shared_optimiser.step()
                     # load the latest parameters from the global agent to the local agent 
                     # use state_dict here as it will map the parameters to the layers 
@@ -133,7 +142,13 @@ class LocalAgent(mp.Process):
                 # using a workaround suggested in the PyTorch discussion forums:
                 # https://discuss.pytorch.org/t/thread-lock-object-cannot-be-pickled-when-using-pytorch-multiprocessing-package-with-spawn-method/184953/3
                 SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('episode reward', episode_reward, self.global_episode_idx.value)
-            
+
+                # global agent does not calculate loss as it does not perform actions - instead it aggregates the gradients from local agents 
+                # so log the local agent loss that is used for the update in each episode 
+                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Actor loss', actor_loss.item(), self.global_episode_idx.value)
+                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Critic loss', critic_loss.item(), self.global_episode_idx.value)
+                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Loss', loss.item(), self.global_episode_idx.value)
+
             with self.global_episode_idx.get_lock(): #lock the variable before updating as another local agent could be trying to access this variable 
                 # print(self.global_episode_idx.value) #can be uncommented to check if training stops before MAX_EPISODE_COUNT
                 self.global_episode_idx.value += 1 #update the value of the episode index and not the local reference to it

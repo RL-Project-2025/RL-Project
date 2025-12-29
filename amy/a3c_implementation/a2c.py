@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.nn.functional import softmax
 import torch.optim as optim
 from torch.distributions import Categorical
 from rollout_buffer import RolloutBuffer
@@ -33,7 +34,10 @@ class ActorCritic(nn.Module):
     # Returns both policy dist params and value estimate
     def forward(self, x):
         h = self.shared(x)
-        return self.actor(h), self.critic(h)
+        # modified to use softmax to convert logits to probabilities
+        policy_logits = self.actor(h)
+        policy_probs = softmax(policy_logits, dim=-1)
+        return policy_probs, self.critic(h)
     
     # SAMPLE action from policy for enviroment interaction
     # Also return log_prob (needed for ratio r_t) and value (for GAE)
@@ -77,9 +81,11 @@ class ActorCritic(nn.Module):
         return torch.tensor(batch_discounted_returns, dtype=torch.float)
     
     # **ADDED METHOD
-    def calc_loss(self, terminal_flag: int) -> float:
+    def calc_loss(self, terminal_flag: int) -> tuple[float, float]:
         """
             Method added so that local agents can compute loss on the fly and send updates to the global agent
+
+            Returns actor loss and critic loss seperately for the purposes of logging
         """
 
         batch_discounted_rewards = self.calc_discounted_return(terminal_flag)
@@ -88,7 +94,7 @@ class ActorCritic(nn.Module):
         #difference between returns and values - will be used in calculation of both actor and critic loss
         delta = batch_discounted_rewards - vals.squeeze()
 
-        # calculate L2 loss for the critic 
+        # calculate L2 loss for the critic
         critic_loss = delta**2
 
         # calculate loss for the actor 
@@ -97,5 +103,6 @@ class ActorCritic(nn.Module):
         actor_loss = -(log_probs*delta)
 
         # sum the loss for the actor and critic and calculate the mean
-        total_agent_loss = critic_loss+actor_loss
-        return total_agent_loss.mean()
+        # total_agent_loss = critic_loss+actor_loss
+        # return total_agent_loss.mean()
+        return critic_loss.mean(), actor_loss.mean()

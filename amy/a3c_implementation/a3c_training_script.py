@@ -5,6 +5,9 @@ from shared_optimiser import SharedAdam
 import torch.multiprocessing as mp
 from torch.utils.tensorboard import SummaryWriter 
 import time
+import torch
+
+# time python a3c_training_script.py
 
 if __name__ == '__main__': # 'if clause protection' needed here otherwise it triggers the following error:
     # RuntimeError: 
@@ -13,20 +16,21 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     # as explained by https://docs.pytorch.org/docs/stable/notes/windows.html#multiprocessing-error-without-if-clause-protection 
 
     # **** HYPERPARAMETERS
-    MAX_EPISODE_COUNT = 100 #safety net to prevent infinite looping --> will increase once have debugged why env wrappers not working with pytorch multiprocessing
+    MAX_EPISODE_COUNT = 500 #safety net to prevent infinite looping
     #the paper introducing A3C suggests global agent should be updated every 5 actions
     # ref section 8 "Experimental setup" of the paper: https://arxiv.org/pdf/1602.01783 
     GLOBAL_AGENT_UPDATE_INTERVAL = 5 
-    GAMMA = 0.99
-    LEARNING_RATE = 1e-3
+    GAMMA = 0.99 #place more emphasis on long term outcomes
+    LEARNING_RATE = 1e-5
     IS_NORMALISING_REWARDS = True
     IS_SCALING_REWARDS = True
-    IS_USING_EMA = False #will run comparisons between MA and EMA for A3C
+    IS_USING_EMA = False
     # ********************
 
     # set up tensorboard logging 
-    run_name = f"a3c_{int(time.time())}"
-    run_name = "bug_check"
+    # run_name = f"a3c_{int(time.time())}"
+    # run_name = "200k_EMA_REW_SCALE_AND_NORMALISE"
+    run_name = f"softmax_trial"
     log_dir = './a3c_logs'
     writer = SummaryWriter(f"{log_dir}/{run_name}")
     writer.add_text('hyperparameters',
@@ -38,14 +42,15 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
 
 
     # get the observation and action space dimensions
-    env = make_env(use_normalisation=True, reward_scaling=True, use_ema=False) # used to extract the dimensions of the action space (rather than hardcoding the number in)
+    env = make_env(use_normalisation=True, reward_scaling=True, use_ema=True) # used to extract the dimensions of the action space (rather than hardcoding the number in)
     obs_space_dim = env.observation_space.shape[0]
     action_space_dim = env.action_space.n
 
     # set up global actor critic agent
+    torch.manual_seed(42) #A3C appears to be very sensitive to weight initialisation - so set a seed to make experiments comparable
     global_agent = ActorCritic(obs_space_dim, action_space_dim, gamma = GAMMA)
     global_agent.share_memory()
-    shared_optimiser = SharedAdam(global_agent.parameters(), lr = LEARNING_RATE)
+    shared_optimiser = SharedAdam(global_agent.parameters(), ) #lr = LEARNING_RATE
     global_episode_index = mp.Value('i', 0) #i=unsinged integer here 
 
     # set up multiple local agents
@@ -63,7 +68,7 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
                                 is_using_ema = IS_USING_EMA,
                                 max_episode_count = MAX_EPISODE_COUNT,
                                 global_update_interval = GLOBAL_AGENT_UPDATE_INTERVAL,
-                                is_logging = True,  #temporarily stop logging whilst I debug why env wrappers not compatible with pytorch multiprocessing (?)
+                                is_logging = True,
                                 log_dir = log_dir,
                                 logging_run_name = run_name) 
                     for i in range(num_cores)]
