@@ -95,12 +95,13 @@ class RolloutBuffer:
 
 # The reason this is a standalone function is because its pure computation.
 # Idk, seems cleaner to me not to put it into the rollout buffer.
-def compute_gae(rewards, values, dones, gamma=0.99, lam=0.95):
+def compute_gae(rewards, values, dones, last_value, gamma=0.99, lam=0.95):
     advantages = []
     gae = 0
     for t in reversed(range(len(rewards))):
         if t == len(rewards) - 1:
-            next_value = 0 # Assuming final timestep is always terminal/ No bootstrap needed!
+            # next_value = 0 # Assuming final timestep is always terminal/ No bootstrap needed?
+            next_value = last_value * (1 - dones[t])  # Bootstrap unless truly terminal
         else:
             next_value = values[t + 1] * (1 - dones[t])
         delta = rewards[t] + gamma * next_value - values[t]
@@ -126,7 +127,7 @@ class PPO:
     '''
     def __init__(self, obs_dim, act_dim, lr=3e-4, gamma=0.99, lam=0.95,
                  clip_eps=0.2, epochs=10, batch_size=64, ent_coef=0.01,
-                 vf_coef=0.5, max_grad_norm=0.5):
+                 vf_coef=0.5, max_grad_norm=0.5, target_kl=0.015):
         '''
         Hyper-params from Table 3 (Page 10)
         Adam Stepsize(Learning rate): 3x10^-4
@@ -140,6 +141,7 @@ class PPO:
         Gradient Clipping(max_grad_norm): .5 (NOT IN PAPER, added for stability!)
         vf_coeff: Atari used 1, made it .5
         ent_coeff: .01 
+        target_kl: 1. We already compute approx_kl 2. Prevents proximal policy from drifting too far from old policy. Now yes SB3 doesnt use this, they have target_kl=None, however I believe for our problem set this is rather usefull in that it promotes safety critical control!
         '''
         self.gamma, self.lam = gamma, lam
         self.clip_eps, self.epochs = clip_eps, epochs
@@ -151,7 +153,8 @@ class PPO:
         self.ac = ActorCritic(obs_dim, act_dim)
         self.optimizer = optim.Adam(self.ac.parameters(), lr=lr)
         self.buffer = RolloutBuffer()
-    
+        self.target_kl = target_kl    
+
     # Get action from policy for env interaction
     # Returns actions needed for env.step (action, log_prob, value) and stores the internals (log_prob & value) for later use
     def select_action(self, obs):
@@ -165,7 +168,7 @@ class PPO:
     def store(self, obs, action, reward, log_prob, value, done):
         self.buffer.store(obs, action, reward, log_prob, value, done)
     
-    def update(self):
+    def update(self, last_value=0):
         '''
         Adding a roadmap to self for this function
         
@@ -187,22 +190,28 @@ class PPO:
 
         5. Clear buffer for next rollout
         '''
+
         obs, actions, rewards, old_log_probs, values, dones = self.buffer.get()
-        
+
         #advantages, returns = compute_gae(rewards, values, dones, self.gamma, self.lam)
         #advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-        # AI sas I shouldnt be normalizing on the CPU then moving to device as it is wastefull
+        # AI sas I shouldnt be normalising on the CPU then moving to device as it is wastefull
             # For documentation: removed `advantages, returns = advantages.to(self.device), returns.to(self.device)` from here too
-        advantages, returns = compute_gae(rewards, values, dones, self.gamma, self.lam)
+        advantages, returns = compute_gae(rewards, values, dones, last_value, self.gamma, self.lam)
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)       
-
-        n = len(obs)      
+        
+        n = len(obs)
         # Tracking variables, very usefull for debugging. Need to upddate in inner loop
         total_policy_loss, total_value_loss, total_entropy = 0, 0, 0
         total_approx_kl, total_clip_frac = 0, 0
         num_updates = 0
-        
+        early_stop = False        
+
         for _ in range(self.epochs):
+            
+            if early_stop:
+                break
+
             indices = torch.randperm(n)
             for start in range(0, n, self.batch_size):
                 idx = indices[start:start + self.batch_size]
@@ -217,7 +226,10 @@ class PPO:
                     approx_kl = ((ratio - 1) - log_ratio).mean()
                     clip_frac = ((ratio - 1).abs() > self.clip_eps).float().mean()
                 
-                
+                if approx_kl > self.target_kl:
+                    early_stop = True
+                    break                    
+
                 surr1 = ratio * advantages[idx]
                 surr2 = torch.clamp(ratio, 1 - self.clip_eps, 1 + self.clip_eps) * advantages[idx]
                 policy_loss = -torch.min(surr1, surr2).mean()
@@ -329,7 +341,12 @@ def train_ppo(env, total_timesteps = 200000, rollout_steps=2048, log_dir='../log
 
         # Now AI says this is redundant and too safe, but its ok. After all the limiting factor is the enviroment
         if len(agent.buffer.obs) == rollout_steps:  # Only update with full buffer
-            stats = agent.update()
+            with torch.no_grad():
+                last_obs_t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0)
+                _, last_value = agent.ac(last_obs_t)
+                last_value = last_value.squeeze().item()
+
+            stats = agent.update(last_value)
             iteration += 1
             
         # The logging was outside the loop before the initial AI fix.
@@ -374,7 +391,8 @@ if __name__ == '__main__':
     import gym4real
     from gym4real.envs.wds.utils import parameter_generator
     from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
-    
+    from Normalise import NormaliseObservation
+
     if os.path.exists("gym4ReaL"):
         os.chdir("gym4ReaL")
     
@@ -382,15 +400,30 @@ if __name__ == '__main__':
         hydraulic_step=3600,
         duration=604800,
         seed=42,
-        world_options="gym4real/envs/wds/world_anytown.yaml"
+        world_options="gym4real/envs/wds/world_anytown.yaml",
     )
     
     params['demand_moving_average'] = False
     params['demand_exp_moving_average'] = True
 
-    base_env = gym.make("gym4real/wds-v0", settings=params)
-    env = RewardScalingWrapper(base_env)
-    
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+
+    # For testing normalisation
+    #for _ in range(10):  # 10 episodes
+    #    obs, _ = env.reset()
+    #    done = False
+    #    while not done:
+    #        action = env.action_space.sample()
+    #        obs, _, term, trunc, _ = env.step(action)
+    #        done = term or trunc
+ 
+    #print(f"After 100 resets:")
+    #print(f"  count: {env.rms.count}")
+    #print(f"  mean:  {env.rms.mean}")
+    #print(f"  std:   {np.sqrt(env.rms.var)}")
+
     agent = train_ppo(env, total_timesteps=200000, log_dir="../logs")
     agent.save("../models/ppo_scratch.pt")
     print(f"\nTraining complete. Model saved to ../models/ppo_scratch.pt")
