@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SB3 RecurrentPPO (MlpLstmPolicy) baseline for WDSEnv - OFF-THE-SHELF FAILURE.
+SB3 RecurrentPPO (MlpLstmPolicy) baseline for WDSEnv 
 
 Purpose: Strong production baseline to validate custom implementations.
 Identical environment preprocessing as custom PPO/recPPO/TRPO baselines:
@@ -186,5 +186,3 @@ if __name__ == "__main__":
     print("\nSB3 RecurrentPPO complete!")
     print(f"Model saved: {model_path}")
     print(f"TensorBoard (overlay with custom): tensorboard --logdir={LOG_ROOT}")
-    print("Expected: ~130-140 return (worst baseline)")
-    print("Ready for figures/sb3_recppo/ histogram comparison")
