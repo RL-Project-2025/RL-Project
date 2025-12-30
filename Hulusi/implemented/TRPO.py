@@ -36,7 +36,24 @@ class ActorCritic(nn.Module):
             nn.Tanh(),
             nn.Linear(hidden, 1)
         )
+
+        # gain=sqrt(2) for Tanh hidden layers, smaller for output heads!
+        self._init_weights()
    
+    def _init_weights(self):
+        # The gain=sqrt(2) for Tanh activations I was talking abt
+        for module in [self.actor[0], self.actor[2], self.critic[0], self.critic[2]]:
+            nn.init.orthogonal_(module.weight, gain=np.sqrt(2))
+            nn.init.constant_(module.bias, 0.0)
+
+        # Policy output, small gain (0.01) prevents initial saturation
+        nn.init.orthogonal_(self.actor[4].weight, gain=0.01)
+        nn.init.constant_(self.actor[4].bias, 0.0)
+
+        # Value output, gain=1 for regression stability
+        nn.init.orthogonal_(self.critic[4].weight, gain=1.0)
+        nn.init.constant_(self.critic[4].bias, 0.0)
+
     # Returns both policy dist params and value estimate 
     def forward(self, x):
         return self.actor(x), self.critic(x)
@@ -84,6 +101,7 @@ class RolloutBuffer:
     # Algo 1, Page 3 "Solve the constrained optimization problem" once per iter!
     def get(self):
         return (
+            #Torch.stack is probably faster than converting it to a np array, BUT I dont understand why its faster so it stays
             torch.tensor(np.array(self.obs), dtype=torch.float32),
             torch.tensor(self.actions, dtype=torch.long),
             torch.tensor(self.rewards, dtype=torch.float32),
@@ -261,6 +279,11 @@ def conjugate_gradient(fvp_fn, g, n_iters=10, residual_tol=1e-10):
 
     for i in range(n_iters):
         Fp = fvp_fn(p)
+        #If denom <= 0, it could make the search direction explode
+        denom = torch.dot(p, Fp)
+        if denom <= 0:
+            break
+
         alpha = r_dot_r / (torch.dot(p, Fp) + 1e-8)
         x = x + alpha * p
         r = r - alpha * Fp
@@ -275,7 +298,7 @@ def conjugate_gradient(fvp_fn, g, n_iters=10, residual_tol=1e-10):
 
     return x
 
-def line_search(actor, get_loss, get_kl, old_params, step_dir, max_step, max_backtracks=10, accept_ratio=0.1, delta=0.01):    
+def line_search(actor, get_loss, get_kl, old_params, step_dir, max_step, g, max_backtracks=10, accept_ratio=0.1, delta=0.01):    
     '''
     Backtracking line search to find step size constraints.
     
@@ -305,7 +328,8 @@ def line_search(actor, get_loss, get_kl, old_params, step_dir, max_step, max_bac
         
         actual_improve = new_loss - old_loss
         # Looking back >= seems to be only correct if get_loss returns the surrogate objective. Just make sure that is the case please. 
-        if new_kl <= delta and actual_improve > 0:
+        expected_improve = (g * step_dir).sum() * step_frac * max_step # directional derivative
+        if new_kl <= delta and actual_improve >= accept_ratio * expected_improve:
             return step_frac * max_step
     
     set_flat_params(actor, old_params)
@@ -342,7 +366,12 @@ class TRPO:
         
         self.ac = ActorCritic(obs_dim, act_dim)
 
-        self.vf_optimizer = optim.Adam(self.ac.critic.parameters(), lr=vf_lr)
+        # Without LR annealing
+        # self.vf_optimizer = optim.Adam(self.ac.critic.parameters(), lr=vf_lr)
+
+        # LR annealing, storing
+        self.vf_lr = vf_lr
+        self.vf_optimizer = optim.Adam(self.ac.critic.parameters(), lr=vf_lr, eps=1e-5)
 
         self.buffer = RolloutBuffer()
         
@@ -413,7 +442,7 @@ class TRPO:
         old_params = flat_params(self.ac.actor)
     
         # Mismatch with line search signature, will fix if clarity is needed
-        step_taken = line_search(actor=self.ac.actor, get_loss=get_surrogate_loss, get_kl=get_kl, old_params=old_params, step_dir=step_dir, max_step=max_step, max_backtracks=self.max_backtracks, accept_ratio=self.accept_ratio, delta=self.delta)
+        step_taken = line_search(actor=self.ac.actor, get_loss=get_surrogate_loss, get_kl=get_kl, old_params=old_params, step_dir=step_dir, max_step=max_step, g=g, max_backtracks=self.max_backtracks, accept_ratio=self.accept_ratio, delta=self.delta)
         
         total_vf_loss = 0
         for _ in range(self.vf_epochs):
@@ -422,7 +451,11 @@ class TRPO:
                 
             self.vf_optimizer.zero_grad()
             vf_loss.backward()
+            
+            # Gradient clipping prevent exploding gradients in critic
+            nn.utils.clip_grad_norm_(self.ac.critic.parameters(), max_norm=0.5)
             self.vf_optimizer.step()
+    
             total_vf_loss += vf_loss.item()
 
         with torch.no_grad():
@@ -440,6 +473,8 @@ class TRPO:
         }
     
     def save(self, path):
+        # NOTE: Wont save NormaliseObservations mean var, goodluck finding a way to fix that.
+        # Either we save normaliser state separately or make the wrapper part of the checkpoint. OR JUST DONT CUT THE TRAINING MID WAY
         torch.save({
             'actor_state_dict': self.ac.actor.state_dict(),
             'critic_state_dict': self.ac.critic.state_dict(),
@@ -506,6 +541,13 @@ def train_trpo(env, total_timesteps=200000, rollout_steps=2048, log_dir='../logs
         # This could cause issues if episode ends right before rollout_steps
         if len(agent.buffer.obs) == rollout_steps:
             stats = agent.update()
+        
+            # LR annealing block, apparently to linear decay to 0 over training
+            # Also changed it slightly just incase it goes negative
+            progress_remaining = max(0, 1.0 - timestep / total_timesteps)
+            for pg in agent.vf_optimizer.param_groups:
+                pg['lr'] = agent.vf_lr * progress_remaining
+            
             iteration += 1
             
             writer.add_scalar('train/policy_loss', stats['policy_loss'], timestep)
