@@ -2,58 +2,75 @@
 
 Reinforcement Learning project using gym4ReaL.
 
-## Resources
+## Current Task (Week 14)
 
-- **Gym Environment**: [gym4ReaL](https://github.com/Daveonwave/gym4ReaL) (WDSEnv)
-- **Reference Framework**: [Stable Baselines3](https://stable-baselines3.readthedocs.io/)
-- **Key Research Paper**: [Arxiv Paper](https://arxiv.org/html/2507.00257v1)
+**Main Goal**: Run all models, complete video and report.
 
-## Current Status (Week 12)
+### Model Runs - DEADLINE: 2 DAYS
 
-**Main Goal**: Final model implementations/runs, report, and video presentation.
+| Person | Status | Task |
+|--------|--------|------|
+| Kavish | [x] Done | All runs complete |
+| Kamal | [x] Done | All runs complete |
+| Amy | [ ] Pending | Clone code, run on HEX (limit CPU) |
+| Reece | [ ] Pending | Clone code, run on HEX |
+| Hulusi | [ ] Pending | No Norm + SMA for both algorithms |
+| Radha | [ X ] Done | Gave TRPO changes to Hulusi |
 
-### Algorithm List
+**Run Configurations**: EMA/SMA × Norm/NoNorm (all combinations)
 
-- DQN - QRDQN - C51 - DoubleDQN
-- PPO - TRPO - RecPPO
-- A2C - A3C
+**Output Location**: Final `.pt`/`.zip` files go in `EMA+Normalisation/`
 
-### Team Tasks
+---
 
-#### Video Presentation (Reece, Kamal)
+## Video Presentation
 
-- 4 mins total (~40 seconds each)
-- Metrics & visualizations
+**Format**: 4 minutes total, ~40 seconds per person
 
-#### Report (Kav, Amy)
+**Key Principle**: Theoretically justify every action.
 
-- Metrics documentation
-- Table of contents drafted
+### Sections
 
-#### Display of Models (Hulusi, Radha)
+1. **Introduction to the Environment** - Kavish
+   - WDSEnv overview, gym4ReaL framework
+   - Paper context and problem statement
 
-- Heuristic baselines/Random/Open pump comparison
-- Find better visualization approach
+2. **Environment Modifications** - Reece
+   - Problems encountered
+   - Fixes implemented (RewardScalingWrapper, Normalisation)
+   - Currently existing issues
 
-### Algorithm Assignments
+3. **Introduction to Models** - Amy
+   - Main models and variations
+   - SB3 baseline usage
 
-|Person|Algorithms|
-|---|---|
-|Kamal, Kavish|DQN|
-|Hulusi, Radha|PPO|
-|Reece, Amy|A3C (Others)|
+4. **Model Modifications** - Hulusi
+   - Changes from the paper
+   - Optimisations from SB3
+   - Network designs
+   - Parameters used
 
-### Additionals
+5. **Model Performance** - Kamal
+   - Avg episode reward (20 episodes)
+   - Network resilience (1 episode)
+   - Loss curves
+   - Additional graphs
 
-- [x] MDP Wrapper - Semi MDP Wrapper
-- [ ] Normalization on both
-- [ ] Changes on EMA
-- [ ] Changes to reward function - additional parameters
+6. **Results & Evaluation** - Radha
+   - Summary / overall story
+   - Future work
+   - Challenges
 
-## Deliverables Checklist
+---
 
-- [ ] All models retrained with corrected 168-step episodes
-- [ ] Draft table of contents
-- [ ] Better model visualization method
-- [ ] Each person: detailed write up of their algorithm work
-- [ ] If time permits: algorithmic creativity research
+## Report
+
+| Section | Status | Assigned |
+|---------|--------|----------|
+| 1-2 | [x] Nearly done | - |
+| 3 (Algorithm writeups) | [ ] Pending | Each person for their algorithm |
+| 4 (Model comparison) | [ ] Pending | Hulusi + Radha (after .zip/.pt files uploaded) |
+| 5-6 | [ ] Pending | After Section 4 |
+
+#### Footnote
+- **Gang**: Final Stretch
