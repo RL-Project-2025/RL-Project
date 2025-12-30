@@ -19,9 +19,9 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     MAX_EPISODE_COUNT = 500 #safety net to prevent infinite looping
     #the paper introducing A3C suggests global agent should be updated every 5 actions
     # ref section 8 "Experimental setup" of the paper: https://arxiv.org/pdf/1602.01783 
-    GLOBAL_AGENT_UPDATE_INTERVAL = 5 
+    GLOBAL_AGENT_UPDATE_INTERVAL = 5 #tried 20 but no performance improvements 
     GAMMA = 0.99 #place more emphasis on long term outcomes
-    LEARNING_RATE = 1e-5
+    LEARNING_RATE = 1e-4
     IS_NORMALISING_REWARDS = True
     IS_SCALING_REWARDS = True
     IS_USING_EMA = False
@@ -29,8 +29,7 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
 
     # set up tensorboard logging 
     # run_name = f"a3c_{int(time.time())}"
-    # run_name = "200k_EMA_REW_SCALE_AND_NORMALISE"
-    run_name = f"softmax_trial"
+    run_name = f"switched_to_l1_loss"
     log_dir = './a3c_logs'
     writer = SummaryWriter(f"{log_dir}/{run_name}")
     writer.add_text('hyperparameters',
