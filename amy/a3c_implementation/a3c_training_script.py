@@ -24,7 +24,7 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
 
     IS_NORMALISING_REWARDS = True
     IS_SCALING_REWARDS = True
-    IS_USING_EMA = False
+    IS_USING_EMA = True
     IS_TB_LOGGING = True
     # ********************
 
@@ -40,8 +40,8 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
         f"is_using_ema={IS_USING_EMA}")
 
 
-    # get the observation and action space dimensions
-    env = make_env(use_normalisation=True, reward_scaling=True, use_ema=True) # used to extract the dimensions of the action space (rather than hardcoding the number in)
+    # set up an env just to extract the dimensions of the action and observation space (rather than hardcoding the number in)
+    env = make_env(use_normalisation=True, reward_scaling=True, use_ema=True) # (this env is not used by local agents)
     obs_space_dim = env.observation_space.shape[0]
     action_space_dim = env.action_space.n
 
@@ -49,7 +49,7 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     torch.manual_seed(42) #A3C appears to be very sensitive to weight initialisation - so set a seed to make experiments comparable
     global_agent = ActorCritic(obs_space_dim, action_space_dim, gamma = GAMMA)
     global_agent.share_memory()
-    shared_optimiser = SharedAdam(global_agent.parameters(), ) #lr = LEARNING_RATE
+    shared_optimiser = SharedAdam(global_agent.parameters(), lr = LEARNING_RATE)
     global_episode_index = mp.Value('i', 0) #i=unsinged integer here 
 
     # set up multiple local agents
