@@ -497,7 +497,7 @@ def train_trpo(env, total_timesteps=200000, rollout_steps=2048, log_dir='../logs
     obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.n
     
-    run_name = f"trpo_scratch_{int(time.time())}"
+    run_name = "TRPO_EMA_NoNorm" 
     writer = SummaryWriter(f"{log_dir}/{run_name}")
     
     agent = TRPO(obs_dim, act_dim)
