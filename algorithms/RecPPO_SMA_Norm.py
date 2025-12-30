@@ -363,7 +363,7 @@ def train_ppo(env, total_timesteps=200000, rollout_steps=2048, log_dir=None):
     obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.n
 
-    run_name = "RecPPO_EMA_Normalised"
+    run_name = "RecPPO_SMA_Normalised"
     writer = SummaryWriter(os.path.join(log_dir, run_name))
 
     agent = PPO(obs_dim, act_dim)
@@ -479,15 +479,12 @@ if __name__ == "__main__":
     )
 
     
-    params['demand_moving_average'] = False
-    params['demand_exp_moving_average'] = True    
-
     base_env = gym.make("gym4real/wds-v0", settings=params)
     env = RewardScalingWrapper(base_env)           # Reward normalization [7]
     env = NormaliseObservation(env)                # Obs normalization (mean=0,std=1)
 
     log_dir = os.path.join("..", "logs")
-    model_path = os.path.join("..", "models", "RecPPO_EMA_Normalised.pt")
+    model_path = os.path.join("..", "models", "RecPPO_SMA_Normalised.pt")
 
     agent = train_ppo(env, total_timesteps=200000, log_dir=log_dir)
     agent.save(model_path)

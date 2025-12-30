@@ -686,10 +686,9 @@ if __name__ == '__main__':
 
     env = gym.make("gym4real/wds-v0", settings=params)
     env = RewardScalingWrapper(env)
-    env = NormaliseObservation(env)
 
-    agent = DuellingDQN_Implementation(env, tensorboard_log="../logs/DuellingDQN_EMA_Normalised")
+    agent = DuellingDQN_Implementation(env, tensorboard_log="../logs/DuellingDQN_EMA_NotNormalised")
     agent.learn(total_timesteps=200000)
-    agent.save("../models/DuellingDQN_EMA_Normalised.zip")
-    print(f"\nTraining complete. Model saved to ../models/DuellingDQN_EMA_Normalised.zip")
+    agent.save("../models/DuellingDQN_EMA_NotNormalised.zip")
+    print(f"\nTraining complete. Model saved to ../models/DuellingDQN_EMA_NotNormalised.zip")
     print(f"View logs: tensorboard --logdir=../logs")

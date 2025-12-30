@@ -191,9 +191,6 @@ if __name__ == '__main__':
         world_options="gym4real/envs/wds/world_anytown.yaml",
     )
     
-    params['demand_moving_average'] = False
-    params['demand_exp_moving_average'] = True
-
     env = gym.make("gym4real/wds-v0", settings=params)
     env = RewardScalingWrapper(env)
     env = NormaliseObservation(env)    
@@ -206,7 +203,7 @@ if __name__ == '__main__':
     
     agent = A2CRollout(env, network, optimizer, n_steps=5)
     
-    writer = SummaryWriter(log_dir="../logs/A2C_EMA_Normalised")
+    writer = SummaryWriter(log_dir="../logs/A2C_SMA_Normalised")
     
     total_timesteps = 200000
     steps = 0
@@ -231,5 +228,5 @@ if __name__ == '__main__':
             episode_reward = 0
     
     writer.close()
-    torch.save(network.state_dict(), "../models/A2C_EMA_Normalised.pt")
-    print(f"\nTraining complete. Model saved to ../models/A2C_EMA_Normalised.pt")
+    torch.save(network.state_dict(), "../models/A2C_SMA_Normalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/A2C_SMA_Normalised.pt")

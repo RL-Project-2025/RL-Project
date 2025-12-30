@@ -253,16 +253,15 @@ if __name__ == '__main__':
 
     env = gym.make("gym4real/wds-v0", settings=params)
     env = RewardScalingWrapper(env)
-    env = NormaliseObservation(env)
 
     use_ddqn = False
     
     if use_ddqn:
         agent = Double_DQN_Implementation(env, tensorboard_log="../logs/ddqn")
     else:
-        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_Normalised")
+        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_NotNormalised")
     
     agent.learn(total_timesteps=200000)
-    agent.save("../models/DQN_EMA_Normalised")
-    print(f"\nTraining complete. Model saved to ../models/DQN_EMA_Normalised.zip")
+    agent.save("../models/DQN_EMA_NotNormalised")
+    print(f"\nTraining complete. Model saved to ../models/DQN_EMA_NotNormalised.zip")
     print(f"View logs: tensorboard --logdir=../logs")

@@ -196,7 +196,6 @@ if __name__ == '__main__':
 
     env = gym.make("gym4real/wds-v0", settings=params)
     env = RewardScalingWrapper(env)
-    env = NormaliseObservation(env)    
 
     obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.n
@@ -206,7 +205,7 @@ if __name__ == '__main__':
     
     agent = A2CRollout(env, network, optimizer, n_steps=5)
     
-    writer = SummaryWriter(log_dir="../logs/A2C_EMA_Normalised")
+    writer = SummaryWriter(log_dir="../logs/A2C_EMA_NotNormalised")
     
     total_timesteps = 200000
     steps = 0
@@ -231,5 +230,5 @@ if __name__ == '__main__':
             episode_reward = 0
     
     writer.close()
-    torch.save(network.state_dict(), "../models/A2C_EMA_Normalised.pt")
-    print(f"\nTraining complete. Model saved to ../models/A2C_EMA_Normalised.pt")
+    torch.save(network.state_dict(), "../models/A2C_EMA_NotNormalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/A2C_EMA_NotNormalised.pt")

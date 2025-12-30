@@ -292,7 +292,7 @@ def train_ppo(env, total_timesteps = 200000, rollout_steps=2048, log_dir='../log
     obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.n
     
-    run_name = "PPO_EMA_Normalised" 
+    run_name = "PPO_SMA_NotNormalised" 
     writer = SummaryWriter(f"{log_dir}/{run_name}")
     
     agent = PPO(obs_dim, act_dim)
@@ -403,12 +403,8 @@ if __name__ == '__main__':
         world_options="gym4real/envs/wds/world_anytown.yaml",
     )
     
-    params['demand_moving_average'] = False
-    params['demand_exp_moving_average'] = True
-
     env = gym.make("gym4real/wds-v0", settings=params)
     env = RewardScalingWrapper(env)
-    env = NormaliseObservation(env)
 
     # For testing normalisation
     #for _ in range(10):  # 10 episodes
@@ -425,6 +421,6 @@ if __name__ == '__main__':
     #print(f"  std:   {np.sqrt(env.rms.var)}")
 
     agent = train_ppo(env, total_timesteps=200000, log_dir="../logs")
-    agent.save("../models/PPO_EMA_Normalised.pt")
-    print(f"\nTraining complete. Model saved to ../models/PPO_EMA_Normalised.pt")
+    agent.save("../models/PPO_SMA_NotNormalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/PPO_SMA_NotNormalised.pt")
     print(f"View logs: tensorboard --logdir=../logs")

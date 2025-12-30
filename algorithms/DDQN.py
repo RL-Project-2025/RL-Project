@@ -255,14 +255,14 @@ if __name__ == '__main__':
     env = RewardScalingWrapper(env)
     env = NormaliseObservation(env)
 
-    use_ddqn = False
+    use_ddqn = True
     
     if use_ddqn:
-        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/ddqn")
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/DDQN_EMA_Normalised")
     else:
         agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_Normalised")
     
     agent.learn(total_timesteps=200000)
-    agent.save("../models/DQN_EMA_Normalised")
-    print(f"\nTraining complete. Model saved to ../models/DQN_EMA_Normalised.zip")
+    agent.save("../models/DDQN_EMA_Normalised")
+    print(f"\nTraining complete. Model saved to ../models/DDQN_EMA_Normalised.zip")
     print(f"View logs: tensorboard --logdir=../logs")

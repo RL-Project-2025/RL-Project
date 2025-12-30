@@ -248,21 +248,17 @@ if __name__ == '__main__':
         world_options="gym4real/envs/wds/world_anytown.yaml",
     )
     
-    params['demand_moving_average'] = False
-    params['demand_exp_moving_average'] = True
-
     env = gym.make("gym4real/wds-v0", settings=params)
     env = RewardScalingWrapper(env)
-    env = NormaliseObservation(env)
 
-    use_ddqn = False
+    use_ddqn = True
     
     if use_ddqn:
-        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/ddqn")
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/DDQN_SMA_NotNormalised")
     else:
         agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_Normalised")
     
     agent.learn(total_timesteps=200000)
-    agent.save("../models/DQN_EMA_Normalised")
-    print(f"\nTraining complete. Model saved to ../models/DQN_EMA_Normalised.zip")
+    agent.save("../models/DDQN_SMA_NotNormalised")
+    print(f"\nTraining complete. Model saved to ../models/DDQN_SMA_NotNormalised.zip")
     print(f"View logs: tensorboard --logdir=../logs")

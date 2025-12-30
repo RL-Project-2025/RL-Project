@@ -1,0 +1,927 @@
+==> A2C_EMA_NoNorm.py <==
+    
+    agent = A2CRollout(env, network, optimizer, n_steps=5)
+    
+    writer = SummaryWriter(log_dir="../logs/A2C_EMA_NotNormalised")
+    
+    total_timesteps = 200000
+    steps = 0
+    episode_reward = 0
+    episode_count = 0
+    
+    while steps < total_timesteps:
+        log_probs, values, rewards, entropies, dones, last_value = agent.collect_rollout()
+        stats = agent.update(log_probs, values, rewards, entropies, dones, last_value)
+        
+        steps += agent.n_steps
+        episode_reward += sum(r.item() for r in rewards)
+        
+        if any(d.item() > 0 for d in dones):
+            episode_count += 1
+            writer.add_scalar("rollout/episode_reward", episode_reward, steps)
+            writer.add_scalar("train/policy_loss", stats["policy_loss"], steps)
+            writer.add_scalar("train/value_loss", stats["value_loss"], steps)
+            writer.add_scalar("train/entropy", stats["entropy"], steps)
+            
+            print(f"Step: {steps} | Episode: {episode_count} | Reward: {episode_reward:.2f}")
+            episode_reward = 0
+    
+    writer.close()
+    torch.save(network.state_dict(), "../models/A2C_EMA_NotNormalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/A2C_EMA_NotNormalised.pt")
+
+==> A2C.py <==
+    
+    agent = A2CRollout(env, network, optimizer, n_steps=5)
+    
+    writer = SummaryWriter(log_dir="../logs/A2C_EMA_Normalised")
+    
+    total_timesteps = 200000
+    steps = 0
+    episode_reward = 0
+    episode_count = 0
+    
+    while steps < total_timesteps:
+        log_probs, values, rewards, entropies, dones, last_value = agent.collect_rollout()
+        stats = agent.update(log_probs, values, rewards, entropies, dones, last_value)
+        
+        steps += agent.n_steps
+        episode_reward += sum(r.item() for r in rewards)
+        
+        if any(d.item() > 0 for d in dones):
+            episode_count += 1
+            writer.add_scalar("rollout/episode_reward", episode_reward, steps)
+            writer.add_scalar("train/policy_loss", stats["policy_loss"], steps)
+            writer.add_scalar("train/value_loss", stats["value_loss"], steps)
+            writer.add_scalar("train/entropy", stats["entropy"], steps)
+            
+            print(f"Step: {steps} | Episode: {episode_count} | Reward: {episode_reward:.2f}")
+            episode_reward = 0
+    
+    writer.close()
+    torch.save(network.state_dict(), "../models/A2C_EMA_Normalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/A2C_EMA_Normalised.pt")
+
+==> A2C_SMA_NoNorm.py <==
+    
+    agent = A2CRollout(env, network, optimizer, n_steps=5)
+    
+    writer = SummaryWriter(log_dir="../logs/A2C_SMA_NotNormalised")
+    
+    total_timesteps = 200000
+    steps = 0
+    episode_reward = 0
+    episode_count = 0
+    
+    while steps < total_timesteps:
+        log_probs, values, rewards, entropies, dones, last_value = agent.collect_rollout()
+        stats = agent.update(log_probs, values, rewards, entropies, dones, last_value)
+        
+        steps += agent.n_steps
+        episode_reward += sum(r.item() for r in rewards)
+        
+        if any(d.item() > 0 for d in dones):
+            episode_count += 1
+            writer.add_scalar("rollout/episode_reward", episode_reward, steps)
+            writer.add_scalar("train/policy_loss", stats["policy_loss"], steps)
+            writer.add_scalar("train/value_loss", stats["value_loss"], steps)
+            writer.add_scalar("train/entropy", stats["entropy"], steps)
+            
+            print(f"Step: {steps} | Episode: {episode_count} | Reward: {episode_reward:.2f}")
+            episode_reward = 0
+    
+    writer.close()
+    torch.save(network.state_dict(), "../models/A2C_SMA_NotNormalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/A2C_SMA_NotNormalised.pt")
+
+==> A2C_SMA_Norm.py <==
+    
+    agent = A2CRollout(env, network, optimizer, n_steps=5)
+    
+    writer = SummaryWriter(log_dir="../logs/A2C_SMA_Normalised")
+    
+    total_timesteps = 200000
+    steps = 0
+    episode_reward = 0
+    episode_count = 0
+    
+    while steps < total_timesteps:
+        log_probs, values, rewards, entropies, dones, last_value = agent.collect_rollout()
+        stats = agent.update(log_probs, values, rewards, entropies, dones, last_value)
+        
+        steps += agent.n_steps
+        episode_reward += sum(r.item() for r in rewards)
+        
+        if any(d.item() > 0 for d in dones):
+            episode_count += 1
+            writer.add_scalar("rollout/episode_reward", episode_reward, steps)
+            writer.add_scalar("train/policy_loss", stats["policy_loss"], steps)
+            writer.add_scalar("train/value_loss", stats["value_loss"], steps)
+            writer.add_scalar("train/entropy", stats["entropy"], steps)
+            
+            print(f"Step: {steps} | Episode: {episode_count} | Reward: {episode_reward:.2f}")
+            episode_reward = 0
+    
+    writer.close()
+    torch.save(network.state_dict(), "../models/A2C_SMA_Normalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/A2C_SMA_Normalised.pt")
+
+==> DDQN_EMA_NoNorm.py <==
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+
+    use_ddqn = True
+    
+    if use_ddqn:
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/DDQN_EMA_NotNormalised")
+    else:
+        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_Normalised")
+    
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DDQN_EMA_NotNormalised")
+    print(f"\nTraining complete. Model saved to ../models/DDQN_EMA_NotNormalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DDQN.py <==
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+
+    use_ddqn = True
+    
+    if use_ddqn:
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/DDQN_EMA_Normalised")
+    else:
+        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_Normalised")
+    
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DDQN_EMA_Normalised")
+    print(f"\nTraining complete. Model saved to ../models/DDQN_EMA_Normalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DDQN_SMA_NoNorm.py <==
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+
+    use_ddqn = True
+    
+    if use_ddqn:
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/DDQN_SMA_NotNormalised")
+    else:
+        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_Normalised")
+    
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DDQN_SMA_NotNormalised")
+    print(f"\nTraining complete. Model saved to ../models/DDQN_SMA_NotNormalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DDQN_SMA_Norm.py <==
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+
+    use_ddqn = True
+    
+    if use_ddqn:
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/DDQN_SMA_Normalised")
+    else:
+        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_Normalised")
+    
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DDQN_SMA_Normalised")
+    print(f"\nTraining complete. Model saved to ../models/DDQN_SMA_Normalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DQN_EMA_NoNorm.py <==
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+
+    use_ddqn = False
+    
+    if use_ddqn:
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/ddqn")
+    else:
+        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_NotNormalised")
+    
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DQN_EMA_NotNormalised")
+    print(f"\nTraining complete. Model saved to ../models/DQN_EMA_NotNormalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DQN.py <==
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+
+    use_ddqn = False
+    
+    if use_ddqn:
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/ddqn")
+    else:
+        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_EMA_Normalised")
+    
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DQN_EMA_Normalised")
+    print(f"\nTraining complete. Model saved to ../models/DQN_EMA_Normalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DQN_SMA_NoNorm.py <==
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+
+    use_ddqn = False
+    
+    if use_ddqn:
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/ddqn")
+    else:
+        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_SMA_NotNormalised")
+    
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DQN_SMA_NotNormalised")
+    print(f"\nTraining complete. Model saved to ../models/DQN_SMA_NotNormalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DQN_SMA_Norm.py <==
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+
+    use_ddqn = False
+    
+    if use_ddqn:
+        agent = Double_DQN_Implementation(env, tensorboard_log="../logs/ddqn")
+    else:
+        agent = DQN_Implementation(env, tensorboard_log="../logs/DQN_SMA_Normalised")
+    
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DQN_SMA_Normalised")
+    print(f"\nTraining complete. Model saved to ../models/DQN_SMA_Normalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DuellingDQN_EMA_NoNorm.py <==
+
+if __name__ == '__main__':
+    import os
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+
+    agent = DuellingDQN_Implementation(env, tensorboard_log="../logs/DuellingDQN_EMA_NotNormalised")
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DuellingDQN_EMA_NotNormalised.zip")
+    print(f"\nTraining complete. Model saved to ../models/DuellingDQN_EMA_NotNormalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DuellingDQN.py <==
+if __name__ == '__main__':
+    import os
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+
+    agent = DuellingDQN_Implementation(env, tensorboard_log="../logs/DuellingDQN_EMA_Normalised")
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DuellingDQN_EMA_Normalised.zip")
+    print(f"\nTraining complete. Model saved to ../models/DuellingDQN_EMA_Normalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DuellingDQN_SMA_NoNorm.py <==
+        if self.writer:
+            self.writer.flush()
+            self.writer.close()
+
+if __name__ == '__main__':
+    import os
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+
+    agent = DuellingDQN_Implementation(env, tensorboard_log="../logs/DuellingDQN_SMA_NotNormalised")
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DuellingDQN_SMA_NotNormalised.zip")
+    print(f"\nTraining complete. Model saved to ../models/DuellingDQN_SMA_NotNormalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> DuellingDQN_SMA_Norm.py <==
+            self.writer.flush()
+            self.writer.close()
+
+if __name__ == '__main__':
+    import os
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+
+    agent = DuellingDQN_Implementation(env, tensorboard_log="../logs/DuellingDQN_SMA_Normalised")
+    agent.learn(total_timesteps=200000)
+    agent.save("../models/DuellingDQN_SMA_Normalised.zip")
+    print(f"\nTraining complete. Model saved to ../models/DuellingDQN_SMA_Normalised.zip")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> Normalise.py <==
+
+    def normalise(self, x):
+        return (x - self.mean) / np.sqrt(self.var + 1e-8) # z-score norm
+
+
+class NormaliseObservation(gym.Wrapper):
+    '''
+        Gym wrapper for obs norm using running statistics.
+        
+        Aim:
+            During training: updates stats and normalises
+            During evaluation: normalises only (set training=False)
+    '''
+
+    def __init__(self, env):
+        super().__init__(env)
+        self.rms = RunningMeanStd(shape=env.observation_space.shape)
+        self.training = True
+
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        if self.training:
+            self.rms.update(obs)
+        return self.rms.normalise(obs), reward, terminated, truncated, info
+
+    def reset(self, **kwargs):
+        obs, info = self.env.reset(**kwargs)
+        if self.training:
+            self.rms.update(obs)
+        return self.rms.normalise(obs), info
+
+==> PPO_EMA_NotNorm.py <==
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+
+    # For testing normalisation
+    #for _ in range(10):  # 10 episodes
+    #    obs, _ = env.reset()
+    #    done = False
+    #    while not done:
+    #        action = env.action_space.sample()
+    #        obs, _, term, trunc, _ = env.step(action)
+    #        done = term or trunc
+ 
+    #print(f"After 100 resets:")
+    #print(f"  count: {env.rms.count}")
+    #print(f"  mean:  {env.rms.mean}")
+    #print(f"  std:   {np.sqrt(env.rms.var)}")
+
+    agent = train_ppo(env, total_timesteps=200000, log_dir="../logs")
+    agent.save("../models/PPO_EMA_NotNormalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/PPO_EMA_NotNormalised.pt")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> PPO.py <==
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+
+    # For testing normalisation
+    #for _ in range(10):  # 10 episodes
+    #    obs, _ = env.reset()
+    #    done = False
+    #    while not done:
+    #        action = env.action_space.sample()
+    #        obs, _, term, trunc, _ = env.step(action)
+    #        done = term or trunc
+ 
+    #print(f"After 100 resets:")
+    #print(f"  count: {env.rms.count}")
+    #print(f"  mean:  {env.rms.mean}")
+    #print(f"  std:   {np.sqrt(env.rms.var)}")
+
+    agent = train_ppo(env, total_timesteps=200000, log_dir="../logs")
+    agent.save("../models/PPO_EMA_Normalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/PPO_EMA_Normalised.pt")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> PPO_SMA_Norm.py <==
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+
+    # For testing normalisation
+    #for _ in range(10):  # 10 episodes
+    #    obs, _ = env.reset()
+    #    done = False
+    #    while not done:
+    #        action = env.action_space.sample()
+    #        obs, _, term, trunc, _ = env.step(action)
+    #        done = term or trunc
+ 
+    #print(f"After 100 resets:")
+    #print(f"  count: {env.rms.count}")
+    #print(f"  mean:  {env.rms.mean}")
+    #print(f"  std:   {np.sqrt(env.rms.var)}")
+
+    agent = train_ppo(env, total_timesteps=200000, log_dir="../logs")
+    agent.save("../models/PPO_SMA_Normalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/PPO_SMA_Normalised.pt")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> PPO_SMA_NotNorm.py <==
+        os.chdir("gym4ReaL")
+    
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+
+    # For testing normalisation
+    #for _ in range(10):  # 10 episodes
+    #    obs, _ = env.reset()
+    #    done = False
+    #    while not done:
+    #        action = env.action_space.sample()
+    #        obs, _, term, trunc, _ = env.step(action)
+    #        done = term or trunc
+ 
+    #print(f"After 100 resets:")
+    #print(f"  count: {env.rms.count}")
+    #print(f"  mean:  {env.rms.mean}")
+    #print(f"  std:   {np.sqrt(env.rms.var)}")
+
+    agent = train_ppo(env, total_timesteps=200000, log_dir="../logs")
+    agent.save("../models/PPO_SMA_NotNormalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/PPO_SMA_NotNormalised.pt")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> RecPPO_EMA_NoNorm.py <==
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation  # Identical to TRPO baseline [5,7]
+
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
+    GYM_ROOT = os.path.join(PROJECT_ROOT, "gym4ReaL")
+    os.chdir(GYM_ROOT)
+
+    # AnyTown network: 1-week episodes, 1hr hydraulic steps [5]
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    base_env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(base_env)           # Reward normalization [7]
+
+    log_dir = os.path.join("..", "logs")
+    model_path = os.path.join("..", "models", "RecPPO_EMA_NotNormalised.pt")
+
+    agent = train_ppo(env, total_timesteps=200000, log_dir=log_dir)
+    agent.save(model_path)
+    print(f"\nTraining complete. Model saved to {model_path}")
+    print("View logs: tensorboard --logdir=../logs")
+    print("Expect ~137 ± 8 final return (loses to TRPO 161 ± 4)")
+
+==> RecPPO.py <==
+    from Normalise import NormaliseObservation  # Identical to TRPO baseline [5,7]
+
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
+    GYM_ROOT = os.path.join(PROJECT_ROOT, "gym4ReaL")
+    os.chdir(GYM_ROOT)
+
+    # AnyTown network: 1-week episodes, 1hr hydraulic steps [5]
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+
+    
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True    
+
+    base_env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(base_env)           # Reward normalization [7]
+    env = NormaliseObservation(env)                # Obs normalization (mean=0,std=1)
+
+    log_dir = os.path.join("..", "logs")
+    model_path = os.path.join("..", "models", "RecPPO_EMA_Normalised.pt")
+
+    agent = train_ppo(env, total_timesteps=200000, log_dir=log_dir)
+    agent.save(model_path)
+    print(f"\nTraining complete. Model saved to {model_path}")
+    print("View logs: tensorboard --logdir=../logs")
+    print("Expect ~137 ± 8 final return (loses to TRPO 161 ± 4)")
+
+==> RecPPO_SMA_NoNorm.py <==
+if __name__ == "__main__":
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation  # Identical to TRPO baseline [5,7]
+
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
+    GYM_ROOT = os.path.join(PROJECT_ROOT, "gym4ReaL")
+    os.chdir(GYM_ROOT)
+
+    # AnyTown network: 1-week episodes, 1hr hydraulic steps [5]
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+    
+    base_env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(base_env)           # Reward normalization [7]
+
+    log_dir = os.path.join("..", "logs")
+    model_path = os.path.join("..", "models", "RecPPO_SMA_NotNormalised.pt")
+
+    agent = train_ppo(env, total_timesteps=200000, log_dir=log_dir)
+    agent.save(model_path)
+    print(f"\nTraining complete. Model saved to {model_path}")
+    print("View logs: tensorboard --logdir=../logs")
+    print("Expect ~137 ± 8 final return (loses to TRPO 161 ± 4)")
+
+==> RecPPO_SMA_Norm.py <==
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation  # Identical to TRPO baseline [5,7]
+
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
+    GYM_ROOT = os.path.join(PROJECT_ROOT, "gym4ReaL")
+    os.chdir(GYM_ROOT)
+
+    # AnyTown network: 1-week episodes, 1hr hydraulic steps [5]
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+
+    
+    base_env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(base_env)           # Reward normalization [7]
+    env = NormaliseObservation(env)                # Obs normalization (mean=0,std=1)
+
+    log_dir = os.path.join("..", "logs")
+    model_path = os.path.join("..", "models", "RecPPO_SMA_Normalised.pt")
+
+    agent = train_ppo(env, total_timesteps=200000, log_dir=log_dir)
+    agent.save(model_path)
+    print(f"\nTraining complete. Model saved to {model_path}")
+    print("View logs: tensorboard --logdir=../logs")
+    print("Expect ~137 ± 8 final return (loses to TRPO 161 ± 4)")
+
+==> TRPO_EMA_NotNorm.py <==
+    return agent
+
+if __name__ == '__main__':
+    import os
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    
+    agent = train_trpo(env, total_timesteps=200000, log_dir="../logs")
+    agent.save("../models/TRPO_EMA_NotNormalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/TRPO_EMA_NotNormalised.pt")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> TRPO.py <==
+
+if __name__ == '__main__':
+    import os
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+
+    params['demand_moving_average'] = False
+    params['demand_exp_moving_average'] = True
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+    
+    agent = train_trpo(env, total_timesteps=200000, log_dir="../logs")
+    agent.save("../models/TRPO_EMA_Normalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/TRPO_EMA_Normalised.pt")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> TRPO_SMA_Norm.py <==
+    
+    writer.close()
+    return agent
+
+if __name__ == '__main__':
+    import os
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    env = NormaliseObservation(env)
+    
+    agent = train_trpo(env, total_timesteps=200000, log_dir="../logs")
+    agent.save("../models/TRPO_SMA_Normalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/TRPO_SMA_Normalised.pt")
+    print(f"View logs: tensorboard --logdir=../logs")
+
+==> TRPO_SMA_NotNorm.py <==
+                      f"fps={fps:>4.1f}")
+    
+    writer.close()
+    return agent
+
+if __name__ == '__main__':
+    import os
+    import gymnasium as gym
+    import gym4real
+    from gym4real.envs.wds.utils import parameter_generator
+    from gym4real.envs.wds.reward_scaling_wrapper import RewardScalingWrapper
+    from Normalise import NormaliseObservation
+
+    if os.path.exists("gym4ReaL"):
+        os.chdir("gym4ReaL")
+
+    params = parameter_generator(
+        hydraulic_step=3600,
+        duration=604800,
+        seed=42,
+        world_options="gym4real/envs/wds/world_anytown.yaml",
+    )
+
+    env = gym.make("gym4real/wds-v0", settings=params)
+    env = RewardScalingWrapper(env)
+    
+    agent = train_trpo(env, total_timesteps=200000, log_dir="../logs")
+    agent.save("../models/TRPO_SMA_NotNormalised.pt")
+    print(f"\nTraining complete. Model saved to ../models/TRPO_SMA_NotNormalised.pt")
+    print(f"View logs: tensorboard --logdir=../logs")
