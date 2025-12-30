@@ -255,7 +255,6 @@ if __name__ == '__main__':
     env = RewardScalingWrapper(env)
     env = NormaliseObservation(env)
 
-    # Choose which agent to train (DQN or DDQN)
     use_ddqn = False
     
     if use_ddqn:
