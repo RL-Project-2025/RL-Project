@@ -6,6 +6,8 @@ import torch.multiprocessing as mp
 from torch.utils.tensorboard import SummaryWriter 
 import time
 import torch
+from logging_util import convert_all_logs_to_single_file
+
 
 if __name__ == '__main__': # 'if clause protection' needed here otherwise it triggers the following error:
     # RuntimeError: 
@@ -26,13 +28,15 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     IS_SCALING_REWARDS = True
     IS_USING_EMA = True
     IS_TB_LOGGING = True
-    # CURRENTLY WORKING ON FUNCTION TO COMPILE LOGS INTO A SINGLE EVENTS.OUT.TFEVENT FILE - AS HAD TO USE WORK AROUND DUE TO MULTIPROCESSING + PICKLING ERROR
     # ********************
 
-    # set up tensorboard logging 
-    run_name = f"a3c_{int(time.time())}"
-    log_dir = './a3c_logs'
-    writer = SummaryWriter(f"{log_dir}/{run_name}")
+    # ******************** SET UP FILE PATHS FOR TB LOGGING AND MODEL SAVING
+    RUN_NAME = f"a3c_{int(time.time())}"
+    LOG_DIR = './a3c_logs'
+    MODEL_DIR_PATH = './a3c_model_files'
+    # ********************
+
+    writer = SummaryWriter(f"{LOG_DIR}/{RUN_NAME}")
     writer.add_text('hyperparameters',
         f"lr={LEARNING_RATE}, gamma={GAMMA}, "
         f"global_agent_update_interval={GLOBAL_AGENT_UPDATE_INTERVAL}, "
@@ -68,8 +72,8 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
                                 max_episode_count = MAX_EPISODE_COUNT,
                                 global_update_interval = GLOBAL_AGENT_UPDATE_INTERVAL,
                                 is_logging = IS_TB_LOGGING,
-                                log_dir = log_dir,
-                                logging_run_name = run_name) 
+                                log_dir = LOG_DIR,
+                                logging_run_name = RUN_NAME) 
                     for i in range(NUM_LOCAL_AGENTS)]
     
     # start multithreaded process
@@ -77,3 +81,7 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     [local_agent.join() for local_agent in local_agents]
 
     writer.close()
+
+    convert_all_logs_to_single_file(input_dir=f"{LOG_DIR}/{RUN_NAME}", output_dir=f"{LOG_DIR}/{RUN_NAME}_compiled")
+    torch.save(global_agent.state_dict(), f"{MODEL_DIR_PATH}/{RUN_NAME}.pt")
+
