@@ -7,8 +7,6 @@ from torch.utils.tensorboard import SummaryWriter
 import time
 import torch
 
-# time python a3c_training_script.py
-
 if __name__ == '__main__': # 'if clause protection' needed here otherwise it triggers the following error:
     # RuntimeError: 
         # An attempt has been made to start a new process before the
@@ -16,20 +14,20 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     # as explained by https://docs.pytorch.org/docs/stable/notes/windows.html#multiprocessing-error-without-if-clause-protection 
 
     # **** HYPERPARAMETERS
-    MAX_EPISODE_COUNT = 500 #safety net to prevent infinite looping
+    MAX_EPISODE_COUNT = 100 #safety net to prevent infinite looping
     #the paper introducing A3C suggests global agent should be updated every 5 actions
     # ref section 8 "Experimental setup" of the paper: https://arxiv.org/pdf/1602.01783 
     GLOBAL_AGENT_UPDATE_INTERVAL = 5 #tried 20 but no performance improvements 
     GAMMA = 0.99 #place more emphasis on long term outcomes
     LEARNING_RATE = 1e-4
+    NUM_LOCAL_AGENTS = mp.cpu_count() #might need to limit here for HEX
     IS_NORMALISING_REWARDS = True
     IS_SCALING_REWARDS = True
     IS_USING_EMA = False
     # ********************
 
     # set up tensorboard logging 
-    # run_name = f"a3c_{int(time.time())}"
-    run_name = f"switched_to_l1_loss"
+    run_name = f"a3c_{int(time.time())}"
     log_dir = './a3c_logs'
     writer = SummaryWriter(f"{log_dir}/{run_name}")
     writer.add_text('hyperparameters',
@@ -53,7 +51,6 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     global_episode_index = mp.Value('i', 0) #i=unsinged integer here 
 
     # set up multiple local agents
-    num_cores = mp.cpu_count()
     local_agents = [LocalAgent(
                                 global_actor_critic =  global_agent,
                                 shared_optimiser = shared_optimiser,
@@ -67,10 +64,10 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
                                 is_using_ema = IS_USING_EMA,
                                 max_episode_count = MAX_EPISODE_COUNT,
                                 global_update_interval = GLOBAL_AGENT_UPDATE_INTERVAL,
-                                is_logging = True,
+                                is_logging = False,
                                 log_dir = log_dir,
                                 logging_run_name = run_name) 
-                    for i in range(num_cores)]
+                    for i in range(NUM_LOCAL_AGENTS)]
     
     # start multithreaded process
     [local_agent.start() for local_agent in local_agents]
