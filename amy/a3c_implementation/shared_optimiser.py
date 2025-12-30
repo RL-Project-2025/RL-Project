@@ -1,6 +1,7 @@
 import torch 
 
 # this class is sourced from: https://github.com/philtabor/Youtube-Code-Repository/blob/master/ReinforcementLearning/PolicyGradient/A3C/pytorch/a3c.py
+# the class is used to share optimiser parameters between the global and local agent - ready for multiprocessing
 class SharedAdam(torch.optim.Adam):
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.99), eps=1e-8,
             weight_decay=0):
