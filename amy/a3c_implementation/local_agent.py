@@ -53,7 +53,7 @@ class LocalAgent(mp.Process):
 
         self.gamma = gamma
         self.local_agent = ActorCritic(obs_space_dim, action_space_dim, self.gamma)
-        # use orthogonal initialisation for all linear layers in the local agent
+        # use orthogonal initialisation for all linear layers in the local agent - to mitigate exploding gradients
         for name, module in self.local_agent.named_modules():
             if type(module) == torch.nn.modules.linear.Linear:
                 torch.nn.init.orthogonal_(module.weight, 1)
@@ -61,20 +61,19 @@ class LocalAgent(mp.Process):
         self.global_agent = global_actor_critic #save this ready to 'send updates' to the global agent
         self.worker_name = worker_name
         self.global_episode_idx = global_episode_idx
-        
         self.shared_optimiser = shared_optimiser
-        
-
         self.is_normalising_rewards = is_normalising_rewards
         self.is_scaling_rewards = is_scaling_rewards
         self.is_using_ema = is_using_ema
-        self.MAX_EPISODE_COUNT = max_episode_count
-        self.GLOBAL_AGENT_UPDATE_INTERVAL = global_update_interval
         self.log_dir = log_dir
         self.run_name = logging_run_name
         self.is_logging = is_logging
 
-        self.max_grad_norm = 0.5
+        self.MAX_EPISODE_COUNT = max_episode_count
+        self.GLOBAL_AGENT_UPDATE_INTERVAL = global_update_interval
+        self.CRITIC_COEF = 0.5
+        self.ENTROPY_COEF = 0.01
+        self.MAX_GRAD_NORM = 0.5
 
         # attempted defining SummaryWriter as class property but it lead to Pickling errors when PyTorch multiprocessing called .start()
         # self.summary_writer = SummaryWriter(f"{self.log_dir}/{self.run_name}")
@@ -87,6 +86,14 @@ class LocalAgent(mp.Process):
         run() initialises a new environment, unique for this local agent - it then trains the agent on the 
         env and updates the global agent at the specified interval
         """
+        # the approach used in the run() function follows the general approach laid out in: https://www.youtube.com/watch?v=OcIx_TBu90Q&t=1482s
+        # however our implementation of run() has been modified to:
+        # - work with our custom implementation of a2c 
+        # - add entropy to the loss calculation 
+        # - add a weight (critic_coef to the loss calculation)
+        # - clip the gradients of the local and global agents to mitigate exploding gradients
+        # - log results to tensorboard 
+
 
         # had to move environment creation to the run function - otherwise it triggers the error:
         # make a local copy of the environment ready for the local agent to explore 
@@ -97,6 +104,7 @@ class LocalAgent(mp.Process):
         
         local_time_step = 1
         while self.global_episode_idx.value < self.MAX_EPISODE_COUNT:
+
             done = False
             obs, info = self.local_env.reset()
             episode_reward = 0
@@ -114,9 +122,7 @@ class LocalAgent(mp.Process):
                 if is_time_to_update or done:
                     # calculate loss for local agent 
                     critic_loss, actor_loss, entropy = self.local_agent.calc_loss(done)
-                    CRITIC_COEF = 0.5
-                    ENTROPY_COEF = 0.01
-                    loss = (CRITIC_COEF * critic_loss) + actor_loss - (ENTROPY_COEF * entropy)
+                    loss = (self.CRITIC_COEF * critic_loss) + actor_loss - (self.ENTROPY_COEF * entropy)
                     self.shared_optimiser.zero_grad()
                     loss.backward()
 
@@ -126,8 +132,8 @@ class LocalAgent(mp.Process):
                         global_param._grad = local_param.grad
 
                     # address outlier gradients that could cause unstable updates
-                    nn.utils.clip_grad_norm_(self.local_agent.parameters(), self.max_grad_norm)
-                    nn.utils.clip_grad_norm_(self.global_agent.parameters(), self.max_grad_norm)
+                    nn.utils.clip_grad_norm_(self.local_agent.parameters(), self.MAX_GRAD_NORM)
+                    nn.utils.clip_grad_norm_(self.global_agent.parameters(), self.MAX_GRAD_NORM)
                     self.shared_optimiser.step()
                     # load the latest parameters from the global agent to the local agent 
                     # use state_dict here as it will map the parameters to the layers 

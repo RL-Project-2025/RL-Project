@@ -9,19 +9,14 @@ import torch
 from logging_util import convert_all_logs_to_single_file
 
 
-if __name__ == '__main__': # 'if clause protection' needed here otherwise it triggers the following error:
-    # RuntimeError: 
-        # An attempt has been made to start a new process before the
-        # current process has finished its bootstrapping phase.
-    # as explained by https://docs.pytorch.org/docs/stable/notes/windows.html#multiprocessing-error-without-if-clause-protection 
+if __name__ == '__main__': # 'if clause protection' needed here otherwise multiprocessig triggers an error
 
     # ******************** HYPERPARAMETERS
-    MAX_EPISODE_COUNT = 200000 #safety net to prevent infinite looping
-    #the paper introducing A3C suggests global agent should be updated every 5 actions
-    # ref section 8 "Experimental setup" of the paper: https://arxiv.org/pdf/1602.01783 
-    GLOBAL_AGENT_UPDATE_INTERVAL = 5 #tried 20 but no performance improvements 
+    MAX_EPISODE_COUNT = 100 #safety net to prevent infinite looping
+    #the paper introducing A3C suggests global agent should be updated every 5 actions [section 8 "Experimental setup": https://arxiv.org/pdf/1602.01783]
+    GLOBAL_AGENT_UPDATE_INTERVAL = 5
     GAMMA = 0.99 #place more emphasis on long term outcomes
-    LEARNING_RATE = 1e-4
+    LEARNING_RATE = 1e-5 #smaller learning rate as batch size is 5 (as recommended by the A3C paper)
     NUM_LOCAL_AGENTS = mp.cpu_count() #might need to limit here for HEX
 
     IS_NORMALISING_REWARDS = True
@@ -82,6 +77,8 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
 
     writer.close()
 
+    # A3C logging requires a work around to avoid pickling errors raised by torch.multiprocessing
     convert_all_logs_to_single_file(input_dir=f"{LOG_DIR}/{RUN_NAME}", output_dir=f"{LOG_DIR}/{RUN_NAME}_compiled")
+    # save the model to .pt file
     torch.save(global_agent.state_dict(), f"{MODEL_DIR_PATH}/{RUN_NAME}.pt")
 

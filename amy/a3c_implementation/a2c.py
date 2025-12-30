@@ -37,13 +37,9 @@ class ActorCritic(nn.Module):
     # Returns both policy dist params and value estimate
     def forward(self, x):
         h = self.shared(x)
-        # modified to use softmax to convert logits to probabilities
-        policy_logits = self.actor(h)
-        policy_probs = softmax(policy_logits, dim=-1)
-        return policy_probs, self.critic(h)
+        return self.actor(h), self.critic(h)
     
     # SAMPLE action from policy for enviroment interaction
-    # Also return log_prob (needed for ratio r_t) and value (for GAE)
     def act(self, obs):
         logits, value = self.forward(obs)
         dist = Categorical(logits=logits)
@@ -59,33 +55,36 @@ class ActorCritic(nn.Module):
             action, log_prob, value = self.act(obs_t)
         return action.item(), log_prob.item(), value.item() #Converting to scalars before returning
     
-    # **ADDED METHOD
     def calc_discounted_return(self, terminal_flag: int) -> torch.Tensor:
         """
             Calculates the discounted reward as set out in the paper (page 14) https://arxiv.org/pdf/1602.01783
 
             Returns an array of discounted rewards for the batch of observations (states) stored in the rollout buffer 
         """
+        
         rollout_buffer_obs = torch.tensor(np.array(self.rollout_buffer.obs), dtype=torch.float32) #convert to tensor ready for the forward pass
         logits, expected_returns = self.forward(rollout_buffer_obs)
-
+        # loop backward (as suggested by the pseudocode in page 14 of the paper https://arxiv.org/pdf/1602.01783)
+        # reverse and convert to numpy to detach from computational graph
         discounted_return = 0
         batch_discounted_returns = []
         if terminal_flag != 1: #if not in the terminal state
-            discounted_return = expected_returns[-1]
-            # DEBUGGING TEST
-            discounted_return = torch.clamp(expected_returns[-1], -10, 10)
+            discounted_return = expected_returns[-1].detach().item()
 
-        # loop backward (as suggested by the pseudocode in page 14 of the paper https://arxiv.org/pdf/1602.01783)
-        reversed_exp_returns = torch.flip(expected_returns, [0, 1])
-        # [::-1] not compatible with torch tensor so use torch.flip instead
-        for exp_return in reversed_exp_returns:
-            discounted_return = exp_return + self.gamma*discounted_return
-            batch_discounted_returns.insert(0, discounted_return) #build the list in reverse order - so it matches the order of the original batch
+        reversed_exp_returns = expected_returns.detach().flatten().tolist()[::-1]
+            
+        for i, exp_return in enumerate(reversed_exp_returns):
+            if i!=0 and terminal_flag == 1:
+                discounted_return = exp_return + self.gamma*discounted_return
+            batch_discounted_returns.append(discounted_return)          
 
-        # DEBUGGING TEST
-        return torch.tensor(batch_discounted_returns) * 0.01
-        # return torch.tensor(batch_discounted_returns, dtype=torch.float)
+        batch_discounted_returns.reverse()
+
+        # OLD return statement
+        # return torch.tensor(batch_discounted_returns, dtype=torch.float32)
+        # experimented with scaling the batch_discounted_returns and found that this significantly reduced the noise in both loss functions (actor and critic)
+        return torch.tensor(batch_discounted_returns, dtype=torch.float32) * 0.01
+        
     
     # **ADDED METHOD
     def calc_loss(self, terminal_flag: int) -> tuple[float, float]:
@@ -95,24 +94,14 @@ class ActorCritic(nn.Module):
             Returns actor loss and critic loss seperately for the purposes of logging
         """
         batch_discounted_rewards = self.calc_discounted_return(terminal_flag)
-        # if batch_discounted_rewards.max() > 10:
-        # currently looking into this as part of debugging 
 
         rollout_buffer_obs = torch.tensor(np.array(self.rollout_buffer.obs), dtype=torch.float32) #convert to tensor ready for the forward pass
         logits, vals = self.forward(rollout_buffer_obs)
         #difference between returns and values - will be used in calculation of both actor and critic loss
-        # use squeeze to match dimensions
-        advantages = batch_discounted_rewards - vals.squeeze(-1)
-
-        # # standardise advantages to see if it's the cause of the critic exploding networks 
-        # ZERO_DIVISION_OFFSET = 1e-9
-        # # add a small offset to address the zero division error
-        # advantages = (advantages - advantages.mean()) / (advantages.std() + ZERO_DIVISION_OFFSET)
+        advantages = batch_discounted_rewards - vals.squeeze(-1) # use squeeze to match dimensions
 
         # calculate L2 loss for the critic
         # critic_loss = advantages**2
-        #use .squeeze(-1) here to address the broadcasting issue
-        # critic_loss = F.mse_loss(vals.squeeze(-1), batch_discounted_rewards)
 
         # switch to L1 loss to address exploding gradients
         critic_loss = F.smooth_l1_loss(vals.view(-1), batch_discounted_rewards.view(-1))
