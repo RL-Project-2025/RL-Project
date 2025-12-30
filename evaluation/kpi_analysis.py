@@ -1,49 +1,24 @@
 import numpy as np
 
 
-def simple_heuristic(state):
+def analyse_kpis(a2c_returns, random_returns, heuristic_returns=None):
     """
-    Simple rule-based policy:
-    - Turn pump ON if tank level < 50%
-    """
-    tank_level = state[0]
-    return 1 if tank_level < 0.5 else 0
-
-
-def evaluate_heuristic(env, heuristic_fn, episodes=5):
-    """
-    Evaluate a heuristic policy on a VecEnv-based environment.
-    Returns episode-level KPIs.
+    Compare episode-level KPIs across policies.
     """
 
-    episode_rewards = []
-    episode_lengths = []
+    print("\n===== KPI ANALYSIS =====")
 
-    for _ in range(episodes):
-        obs = env.reset()
-        done = False
-        total_reward = 0.0
-        steps = 0
+    def summary(name, returns):
+        returns = np.array(returns)
+        print(f"\n{name}:")
+        print(f"  Mean return: {returns.mean():.2f}")
+        print(f"  Std return:  {returns.std():.2f}")
+        print(f"  Median:     {np.median(returns):.2f}")
+        print(f"  5th pct:    {np.percentile(returns, 5):.2f}")
+        print(f"  95th pct:   {np.percentile(returns, 95):.2f}")
 
-        while not done:
-            # VecEnv
-            single_obs = obs[0]                 # unbatch
-            action = heuristic_fn(single_obs)   # heuristic decision
-            action = np.array([action])         # re-batch
+    summary("A2C", a2c_returns)
+    summary("Random", random_returns)
 
-            obs, reward, done, info = env.step(action)
-
-            total_reward += reward[0]           
-            steps += 1
-
-        episode_rewards.append(total_reward)
-        episode_lengths.append(steps)
-
-    return {
-        "mean_reward": float(np.mean(episode_rewards)),
-        "std_reward": float(np.std(episode_rewards)),
-        "mean_length": float(np.mean(episode_lengths)),
-        "std_length": float(np.std(episode_lengths)),
-        "all_rewards": episode_rewards,
-        "all_lengths": episode_lengths,
-    }
+    if heuristic_returns is not None:
+        summary("Heuristic", heuristic_returns)

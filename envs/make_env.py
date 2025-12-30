@@ -25,6 +25,8 @@ def make_env(
         )
 
         params = parameter_generator(world_file)
+        params['demand_moving_average'] = False      # Disable SMA
+        params['demand_exp_moving_average'] = True  # Enable EMA
         env = gym.make("gym4real/wds-v0", settings=params)
 
         if reward_scaling:
