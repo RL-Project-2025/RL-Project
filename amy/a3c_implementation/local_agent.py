@@ -4,6 +4,7 @@ from shared_optimiser import SharedAdam
 from make_env import make_env
 from torch.utils.tensorboard import SummaryWriter 
 import torch.nn as nn
+import torch
 
 class LocalAgent(mp.Process):
     """
@@ -52,6 +53,11 @@ class LocalAgent(mp.Process):
 
         self.gamma = gamma
         self.local_agent = ActorCritic(obs_space_dim, action_space_dim, self.gamma)
+        # use orthogonal initialisation for all linear layers in the local agent
+        for name, module in self.local_agent.named_modules():
+            if type(module) == torch.nn.modules.linear.Linear:
+                torch.nn.init.orthogonal_(module.weight, 1)
+
         self.global_agent = global_actor_critic #save this ready to 'send updates' to the global agent
         self.worker_name = worker_name
         self.global_episode_idx = global_episode_idx
@@ -107,8 +113,10 @@ class LocalAgent(mp.Process):
                 is_time_to_update = local_time_step % self.GLOBAL_AGENT_UPDATE_INTERVAL ==0
                 if is_time_to_update or done:
                     # calculate loss for local agent 
-                    critic_loss, actor_loss = self.local_agent.calc_loss(done)
-                    loss = critic_loss + actor_loss
+                    critic_loss, actor_loss, entropy = self.local_agent.calc_loss(done)
+                    CRITIC_COEF = 0.5
+                    ENTROPY_COEF = 0.01
+                    loss = (CRITIC_COEF * critic_loss) + actor_loss - (ENTROPY_COEF * entropy)
                     self.shared_optimiser.zero_grad()
                     loss.backward()
 
@@ -117,6 +125,7 @@ class LocalAgent(mp.Process):
                     for local_param, global_param in agent_parameters:
                         global_param._grad = local_param.grad
 
+                    # address outlier gradients that could cause unstable updates
                     nn.utils.clip_grad_norm_(self.local_agent.parameters(), self.max_grad_norm)
                     nn.utils.clip_grad_norm_(self.global_agent.parameters(), self.max_grad_norm)
                     self.shared_optimiser.step()
@@ -149,9 +158,12 @@ class LocalAgent(mp.Process):
                 SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Critic loss', critic_loss.item(), self.global_episode_idx.value)
                 SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Loss', loss.item(), self.global_episode_idx.value)
 
+                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Entropy', entropy.item(), self.global_episode_idx.value)
+
             with self.global_episode_idx.get_lock(): #lock the variable before updating as another local agent could be trying to access this variable 
                 # print(self.global_episode_idx.value) #can be uncommented to check if training stops before MAX_EPISODE_COUNT
                 self.global_episode_idx.value += 1 #update the value of the episode index and not the local reference to it
+
 
 
 
