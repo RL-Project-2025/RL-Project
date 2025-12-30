@@ -34,10 +34,10 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     writer = SummaryWriter(f"{log_dir}/{run_name}")
     writer.add_text('hyperparameters',
         f"lr={LEARNING_RATE}, gamma={GAMMA}, "
-        f"global_agent_update_interval={GLOBAL_AGENT_UPDATE_INTERVAL}"
-        f"max_episode_count={MAX_EPISODE_COUNT}"
-        f"is_normalising_rewards={IS_NORMALISING_REWARDS}, is_scaling_rewards={IS_SCALING_REWARDS}"
-        f"is_using_ema={IS_USING_EMA}")
+        f"global_agent_update_interval={GLOBAL_AGENT_UPDATE_INTERVAL}, "
+        f"max_episode_count={MAX_EPISODE_COUNT}, "
+        f"is_normalising_rewards={IS_NORMALISING_REWARDS}, is_scaling_rewards={IS_SCALING_REWARDS}, "
+        f"is_using_ema={IS_USING_EMA}, num_local_agents={NUM_LOCAL_AGENTS}")
 
 
     # set up an env just to extract the dimensions of the action and observation space (rather than hardcoding the number in)
