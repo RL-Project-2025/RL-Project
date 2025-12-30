@@ -26,6 +26,7 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise it tri
     IS_SCALING_REWARDS = True
     IS_USING_EMA = True
     IS_TB_LOGGING = True
+    # CURRENTLY WORKING ON FUNCTION TO COMPILE LOGS INTO A SINGLE EVENTS.OUT.TFEVENT FILE - AS HAD TO USE WORK AROUND DUE TO MULTIPROCESSING + PICKLING ERROR
     # ********************
 
     # set up tensorboard logging 
