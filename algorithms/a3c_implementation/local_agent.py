@@ -19,6 +19,7 @@ class LocalAgent(mp.Process):
                  gamma: float,
                  worker_name: str,
                  global_episode_idx: int,
+                 global_timestep_idx: int,
                  is_normalising_rewards: bool,
                  is_scaling_rewards: bool,
                  is_using_ema: bool,
@@ -61,6 +62,7 @@ class LocalAgent(mp.Process):
         self.global_agent = global_actor_critic #save this ready to 'send updates' to the global agent
         self.worker_name = worker_name
         self.global_episode_idx = global_episode_idx
+        self.global_timestep_idx = global_timestep_idx
         self.shared_optimiser = shared_optimiser
         self.is_normalising_rewards = is_normalising_rewards
         self.is_scaling_rewards = is_scaling_rewards
@@ -116,7 +118,6 @@ class LocalAgent(mp.Process):
                 done = terminated or truncated
                 self.local_agent.rollout_buffer.store(obs, action, reward, log_prob, value, done)
                 episode_reward += reward
-                
 
                 is_time_to_update = local_time_step % self.GLOBAL_AGENT_UPDATE_INTERVAL ==0
                 if is_time_to_update or done:
@@ -145,6 +146,9 @@ class LocalAgent(mp.Process):
 
                 local_time_step += 1
                 obs = next_obs
+                with self.global_timestep_idx.get_lock():
+                    self.global_timestep_idx.value += 1
+                
 
             # when episode has finished 
             # print to console so can monitor progress of model
@@ -156,15 +160,15 @@ class LocalAgent(mp.Process):
                 # this seems to be a incompatibility issue between TensorBoard SummaryWriter and PyTroch multiprocessing
                 # using a workaround suggested in the PyTorch discussion forums:
                 # https://discuss.pytorch.org/t/thread-lock-object-cannot-be-pickled-when-using-pytorch-multiprocessing-package-with-spawn-method/184953/3
-                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('episode reward', episode_reward, self.global_episode_idx.value)
+                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('episode reward', episode_reward, self.global_timestep_idx.value)
 
                 # global agent does not calculate loss as it does not perform actions - instead it aggregates the gradients from local agents 
                 # so log the local agent loss that is used for the update in each episode 
-                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Actor loss', actor_loss.item(), self.global_episode_idx.value)
-                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Critic loss', critic_loss.item(), self.global_episode_idx.value)
-                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Loss', loss.item(), self.global_episode_idx.value)
+                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Actor loss', actor_loss.item(), self.global_timestep_idx.value)
+                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Critic loss', critic_loss.item(), self.global_timestep_idx.value)
+                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Loss', loss.item(), self.global_timestep_idx.value)
 
-                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Entropy', entropy.item(), self.global_episode_idx.value)
+                SummaryWriter(f"{self.log_dir}/{self.run_name}").add_scalar('Entropy', entropy.item(), self.global_timestep_idx.value)
 
             with self.global_episode_idx.get_lock(): #lock the variable before updating as another local agent could be trying to access this variable 
                 # print(self.global_episode_idx.value) #can be uncommented to check if training stops before MAX_EPISODE_COUNT
