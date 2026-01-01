@@ -688,7 +688,7 @@ if __name__ == '__main__':
     env = RewardScalingWrapper(env)
     env = NormaliseObservation(env)
 
-    agent = DuellingDQN_Implementation(env, tensorboard_log="../logs/DuellingDQN_EMA_Normalised")
+    agent = Dueling_DQN_Implementation(env, tensorboard_log="../logs/DuellingDQN_EMA_Normalised")
     agent.learn(total_timesteps=200000)
     agent.save("../models/DuellingDQN_EMA_Normalised.zip")
     print(f"\nTraining complete. Model saved to ../models/DuellingDQN_EMA_Normalised.zip")

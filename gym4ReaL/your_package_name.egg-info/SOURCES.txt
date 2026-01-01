@@ -73,6 +73,8 @@ gym4real/envs/trading/env.py
 gym4real/envs/trading/utils.py
 gym4real/envs/wds/__init__.py
 gym4real/envs/wds/env.py
+gym4real/envs/wds/hourly_wrapper.py
+gym4real/envs/wds/reward_scaling_wrapper.py
 gym4real/envs/wds/rewards.py
 gym4real/envs/wds/utils.py
 gym4real/envs/wds/wds_test.py
