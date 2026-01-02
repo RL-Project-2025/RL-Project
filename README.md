@@ -27,7 +27,7 @@ Reinforcement Learning project using gym4ReaL.
 
 **Format**: 4 minutes total, ~40 seconds per person
 
-**Key Principle**: Theoretically justify every action.
+**TO DO**: Draft your own sections, run it through Reece & Kamal, and start recording if they approve.
 
 ### Sections
 
