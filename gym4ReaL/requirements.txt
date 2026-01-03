@@ -1,0 +1,13 @@
+# Python version: 3.12.9
+gymnasium==1.1.1
+numpy==2.2.4
+PyYAML==6.0.2
+pandas==2.2.3
+scipy==1.15.2
+tqdm==4.67.1
+tensorboard==2.19.0
+seaborn==0.13.2
+rich==14.0.0
+matplotlib==3.10.1
+matplotlib-inline==0.1.7
+jupyter==1.1.1
