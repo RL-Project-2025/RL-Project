@@ -12,9 +12,9 @@ Reinforcement Learning project using gym4ReaL.
 |--------|--------|------|
 | Kavish | [x] Done | All runs complete |
 | Kamal | [x] Done | All runs complete |
-| Amy | [ ] Pending | Clone code, run on HEX (limit CPU) |
-| Reece | [ ] Pending | Clone code, run on HEX |
-| Hulusi | [ ] Pending | No Norm + SMA for both algorithms |
+| Amy | [ x ] Pending | Clone code, run on HEX (limit CPU) |
+| Reece | [ x ] Pending | Clone code, run on HEX |
+| Hulusi | [ x ] Pending | No Norm + SMA for both algorithms |
 | Radha | [ X ] Done | Gave TRPO changes to Hulusi |
 
 **Run Configurations**: EMA/SMA × Norm/NoNorm (all combinations)
