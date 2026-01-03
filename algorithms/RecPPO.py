@@ -195,7 +195,7 @@ class PPO:
         gamma=0.99,
         lam=0.95,
         clip_eps=0.2,
-        epochs=5,           # ↓ from 10: RNN overfitting prevention
+        epochs=3,           # ↓ from 10: RNN overfitting prevention
         batch_size=64,
         ent_coef=0.02,      # ↑ from 0.01: exploration for partial obs
         vf_coef=0.5,

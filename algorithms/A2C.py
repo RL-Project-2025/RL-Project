@@ -204,7 +204,7 @@ if __name__ == '__main__':
     network = ActorCriticNet(obs_dim, act_dim)
     optimizer = torch.optim.RMSprop(network.parameters(), lr=7e-4, alpha=0.99, eps=1e-5)
     
-    agent = A2CRollout(env, network, optimizer, n_steps=5)
+    agent = A2CRollout(env, network, optimizer, n_steps=256)
     
     writer = SummaryWriter(log_dir="../logs/A2C_EMA_Normalised")
     

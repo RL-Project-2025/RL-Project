@@ -69,6 +69,8 @@ class DQN_Implementation:
         self.update_frequency = 1000 
         self.steps_completed = 0
 
+        self.gradient_update_frequency = 4
+
         self.experience_memory = Replay_Buffer(buffer_size)  # Initialise Replay Buffer
         
         self.state_dimension = env.observation_space.shape[0]  # State Space Dimension
@@ -148,7 +150,8 @@ class DQN_Implementation:
             
             state = next_state
 
-            loss_val = self.update_network()
+            if self.steps_completed % self.gradient_update_frequency == 0:
+                loss_val = self.update_network()
             # If episode finishes or terminates after special event (overflow)
             if terminated or truncated:
                 if self.writer:
