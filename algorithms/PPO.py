@@ -195,7 +195,7 @@ class PPO:
 
         #advantages, returns = compute_gae(rewards, values, dones, self.gamma, self.lam)
         #advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-        # AI sas I shouldnt be normalising on the CPU then moving to device as it is wastefull
+        # Turns out normalising on the CPU then moving to device as it is wastefull
             # For documentation: removed `advantages, returns = advantages.to(self.device), returns.to(self.device)` from here too
         advantages, returns = compute_gae(rewards, values, dones, last_value, self.gamma, self.lam)
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)       
@@ -334,12 +334,13 @@ def train_ppo(env, total_timesteps = 200000, rollout_steps=2048, log_dir='../log
             
             #if timestep >= total_timesteps:
             #    break
-            # AI said this break is kind of ok but then agent.update() runs with a partial buffer.
+            # This break is kind of ok but then agent.update() runs with a partial buffer.
+            # So we arent using this break :D
             
             if timestep >= total_timesteps:
                 break
 
-        # Now AI says this is redundant and too safe, but its ok. After all the limiting factor is the enviroment
+        # Porbably redundant too, HOWEVER WE AENT LIMITED BY THE ALGORITHM BUT ENV INSTEAD
         if len(agent.buffer.obs) == rollout_steps:  # Only update with full buffer
             with torch.no_grad():
                 last_obs_t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0)
@@ -349,7 +350,7 @@ def train_ppo(env, total_timesteps = 200000, rollout_steps=2048, log_dir='../log
             stats = agent.update(last_value)
             iteration += 1
             
-        # The logging was outside the loop before the initial AI fix.
+        # The logging was outside the loop.
         # Then realised it would crash if stats didnt exist
 
             # Log training stats
