@@ -1,3 +1,0 @@
-epynet==1.1
-stable_baselines3==2.4.1
-intel-tensorflow==0.0.1
