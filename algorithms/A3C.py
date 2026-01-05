@@ -510,8 +510,8 @@ if __name__ == '__main__': # 'if clause protection' needed here otherwise multip
 
     # ******************** SET UP FILE PATHS FOR TB LOGGING AND MODEL SAVING
     RUN_NAME = "A3C_EMA_NoNorm"
-    LOG_DIR = './a3c_logs'
-    MODEL_DIR_PATH = './a3c_model_files'
+    LOG_DIR = './logs'
+    MODEL_DIR_PATH = './models'
     # ********************
 
     writer = SummaryWriter(f"{LOG_DIR}/{RUN_NAME}")
