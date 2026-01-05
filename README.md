@@ -1,76 +1,60 @@
-# Water Management - RL Algorithm Testing
+# Reinforcement Learning for Water Distribution System Control
 
-Reinforcement Learning project using gym4ReaL.
+## Setup
 
-## Current Task (Week 14)
+### 1. Clone and install the environment
 
-**Main Goal**: Run all models, complete video and report.
+```bash
+git clone https://github.com/Daveonwave/gym4ReaL/
+cd gym4ReaL/
+pip install -e . --break-system-packages
+cd ..
+```
 
-### Model Runs - DEADLINE: 2 DAYS
+### 2. Install dependencies
 
-| Person | Status | Task |
-|--------|--------|------|
-| Kavish | [x] Done | All runs complete |
-| Kamal | [x] Done | All runs complete |
-| Amy | [ x ] Pending | Clone code, run on HEX (limit CPU) |
-| Reece | [ x ] Pending | Clone code, run on HEX |
-| Hulusi | [ x ] Pending | No Norm + SMA for both algorithms |
-| Radha | [ X ] Done | Gave TRPO changes to Hulusi |
+```bash
+pip install -r requirements.txt --break-system-packages
+```
 
-**Run Configurations**: EMA/SMA × Norm/NoNorm (all combinations)
+### 3. Move reward wrapper to environment
 
-**Output Location**: Final `.pt`/`.zip` files go in `EMA+Normalisation/`
+```bash
+cp algorithms/reward_scaling_wrapper.py gym4ReaL/gym4real/envs/wds/
+```
 
----
+## Training
 
-## Video Presentation
+Run algorithms from the project root:
 
-**Format**: 4 minutes total, ~40 seconds per person
+```bash
+# Example train 
+python3 algorithms/PPO.py
+python3 algorithms/TRPO.py
+python3 algorithms/DQN.py
+python3 algorithms/A2C.py
+```
 
-**TO DO**: Draft your own sections, run it through Reece & Kamal, and start recording if they approve.
+## Monitoring Training
 
-### Sections
+```bash
+tensorboard --logdir logs/
+```
 
-1. **Introduction to the Environment** - Kavish
-   - WDSEnv overview, gym4ReaL framework
-   - Paper context and problem statement
+## Environment Details
 
-2. **Environment Modifications** - Reece
-   - Problems encountered
-   - Fixes implemented (RewardScalingWrapper, Normalisation)
-   - Currently existing issues
+**Observation space** (27 dimensions):
 
-3. **Introduction to Models** - Amy
-   - Main models and variations
-   - SB3 baseline usage
+- Tank water levels (2)
+- Node pressures (22)
+- Demand forecast values (2)
+- Time encoding (1)
 
-4. **Model Modifications** - Hulusi
-   - Changes from the paper
-   - Optimisations from SB3
-   - Network designs
-   - Parameters used
+**Action space** (Discrete, 4 actions):
 
-5. **Model Performance** - Kamal
-   - Avg episode reward (20 episodes)
-   - Network resilience (1 episode)
-   - Loss curves
-   - Additional graphs
+- Pump on/off combinations for the 2 pumps
 
-6. **Results & Evaluation** - Radha
-   - Summary / overall story
-   - Future work
-   - Challenges
+**Reward**: Based on maintaining pressure bounds and minimizing tank overflow
 
----
-
-## Report
-
-| Section | Status | Assigned |
-|---------|--------|----------|
-| 1-2 | [x] Nearly done | - |
-| 3 (Algorithm writeups) | [ ] Pending | Each person for their algorithm |
-| 4 (Model comparison) | [ ] Pending | Hulusi + Radha (after .zip/.pt files uploaded) |
-| 5-6 | [ ] Pending | After Section 4 |
-
-#### Footnote
-- **Gang**: Final Stretch
+## Cloned environment
+[gym4ReaL](https://github.com/Daveonwave/gym4ReaL) - Gymnasium environment for water networks

@@ -136,6 +136,7 @@ class DQN_Implementation:
         state, _ = self.env.reset()
         episode_reward, episode_count = 0, 0
         
+        loss_val = None
         for step in range(1, total_timesteps + 1):
             self.steps_completed += 1
             

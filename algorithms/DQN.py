@@ -135,7 +135,8 @@ class DQN_Implementation:
         print(f"Train for {total_timesteps} steps")
         state, _ = self.env.reset()
         episode_reward, episode_count = 0, 0
-        
+       
+        loss_val = None 
         for step in range(1, total_timesteps + 1):
             self.steps_completed += 1
             
